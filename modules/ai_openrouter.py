@@ -27,7 +27,7 @@ Sites: {', '.join(sites)}
 
     try:
         response = await client.chat.completions.create(
-            model="openrouter/free",  # 🔥 САМОЕ ВАЖНОЕ
+            model="mistralai/mistral-7b-instruct",  # 🔥 САМОЕ ВАЖНОЕ
             messages=[
                 {"role": "system", "content": "Ты OSINT аналитик"},
                 {"role": "user", "content": prompt},
