@@ -30,7 +30,7 @@ Sites: {', '.join(sites)}
 
     try:
         response = await client.chat.completions.create(
-            model="mistralai/mistral-7b-instruct",  # 🔥 САМОЕ ВАЖНОЕ
+            model="qwen/qwen3-7b",  # 🔥 САМОЕ ВАЖНОЕ
             messages=[
                 {"role": "system", "content": "Ты OSINT аналитик"},
                 {"role": "user", "content": prompt},
