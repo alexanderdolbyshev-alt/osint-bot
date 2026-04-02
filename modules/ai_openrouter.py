@@ -30,7 +30,7 @@ Sites: {', '.join(sites)}
 
     try:
         response = await client.chat.completions.create(
-            model="qwen/qwen3-7b",  # 🔥 САМОЕ ВАЖНОЕ
+            model="openrouter/auto",  # ✅ ФИКС
             messages=[
                 {"role": "system", "content": "Ты OSINT аналитик"},
                 {"role": "user", "content": prompt},
