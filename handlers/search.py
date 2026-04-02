@@ -1,6 +1,7 @@
 import re
 import asyncio
 import time
+import os
 
 from aiogram import Router
 from aiogram.types import Message
@@ -25,6 +26,9 @@ from modules.phone_search import search_phone
 from modules.ai_openrouter import analyze_username_ai
 
 router = Router()
+
+# ✅ АДМИНЫ ИЗ ENV
+ADMIN_IDS = list(map(int, os.getenv("ADMIN_IDS", "0").split(",")))
 
 EMAIL_RE = re.compile(r"^[^@]+@[^@]+\.[^@]+$")
 PHONE_RE = re.compile(r"^\+?[0-9]{7,15}$")
@@ -59,12 +63,14 @@ async def handle_search(message: Message):
     # лимиты
     access = await db.can_search(user_id, FREE_SEARCHES_TOTAL)
 
-    if not access["allowed"]:
-        await message.answer(
-            "🚫 Лимит исчерпан\n\nКупи доступ 👇",
-            reply_markup=paywall_keyboard()
-        )
-        return
+    # ✅ ПРОПУСК ЛИМИТА ДЛЯ АДМИНОВ
+    if user_id not in ADMIN_IDS:
+        if not access["allowed"]:
+            await message.answer(
+                "🚫 Лимит исчерпан\n\nКупи доступ 👇",
+                reply_markup=paywall_keyboard()
+            )
+            return
 
     clean = re.sub(r"[\s\-\(\)]", "", text)
 
@@ -105,12 +111,10 @@ async def _handle_username(message: Message, username: str):
 
         elapsed = time.time() - start
 
-        # ускорение (ограничиваем вывод)
         found_sites = found_sites[:20]
 
         response = format_username_results(username, found_sites, all_sites)
 
-        # AI (НЕ блокирует основной поток)
         async def run_ai():
             try:
                 return await analyze_username_ai(username, found_sites)
