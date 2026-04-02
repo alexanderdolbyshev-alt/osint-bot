@@ -1,0 +1,461 @@
+2026-04-02 11:52:44,907 [INFO] __main__: Запускаю polling...
+2026-04-02 11:52:45,381 [INFO] __main__: База данных подключена
+2026-04-02 11:52:45,382 [INFO] __main__: Бот запущен и готов к работе
+2026-04-02 11:52:45,384 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 11:52:48,333 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 11:58:35,120 [INFO] aiogram.event: Update id=4438899 is handled. Duration 415 ms by bot id=8797949544
+2026-04-02 11:59:25,966 [INFO] aiogram.event: Update id=4438900 is handled. Duration 523 ms by bot id=8797949544
+2026-04-02 12:00:18,836 [INFO] aiogram.event: Update id=4438901 is handled. Duration 544 ms by bot id=8797949544
+2026-04-02 12:01:06,796 [INFO] aiogram.event: Update id=4438902 is handled. Duration 635 ms by bot id=8797949544
+2026-04-02 12:01:40,124 [INFO] aiogram.event: Update id=4438903 is handled. Duration 14884 ms by bot id=8797949544
+2026-04-02 12:02:21,640 [INFO] aiogram.event: Update id=4438904 is handled. Duration 14330 ms by bot id=8797949544
+2026-04-02 12:02:56,561 [INFO] aiogram.event: Update id=4438905 is handled. Duration 493 ms by bot id=8797949544
+2026-04-02 12:30:31,986 [ERROR] __main__: Set BOT_TOKEN! Use environment variable: export BOT_TOKEN='your_token'
+2026-04-02 12:35:26,761 [INFO] __main__: Starting polling...
+2026-04-02 12:35:26,765 [INFO] __main__: Database connected
+2026-04-02 12:35:26,765 [INFO] __main__: Bot started
+2026-04-02 12:35:26,765 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 12:35:27,020 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 12:35:57,657 [INFO] aiogram.event: Update id=4438906 is handled. Duration 251 ms by bot id=8797949544
+2026-04-02 12:37:01,467 [INFO] aiogram.event: Update id=4438907 is handled. Duration 460 ms by bot id=8797949544
+2026-04-02 12:38:13,517 [INFO] aiogram.event: Update id=4438908 is handled. Duration 15129 ms by bot id=8797949544
+2026-04-02 12:39:01,623 [INFO] aiogram.event: Update id=4438909 is handled. Duration 481 ms by bot id=8797949544
+2026-04-02 12:39:29,124 [INFO] aiogram.event: Update id=4438910 is handled. Duration 101 ms by bot id=8797949544
+2026-04-02 13:16:25,613 [INFO] __main__: Starting polling...
+2026-04-02 13:16:25,764 [INFO] __main__: Database connected
+2026-04-02 13:16:25,764 [INFO] __main__: Bot is ready
+2026-04-02 13:16:25,764 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 13:16:26,017 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 13:17:00,010 [INFO] aiogram.event: Update id=4438911 is not handled. Duration 1 ms by bot id=8797949544
+2026-04-02 13:17:00,012 [ERROR] aiogram.event: Cause exception while process update id=4438911 by bot id=8797949544
+OperationalError: table users has no column named first_name
+Traceback (most recent call last):
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\dispatcher.py", line 320, in _process_update
+    response = await self.feed_update(bot, update, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\dispatcher.py", line 164, in feed_update
+    response = await self.update.wrap_outer_middleware(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+    )
+    ^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\middlewares\error.py", line 27, in __call__
+    return await handler(event, data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\middlewares\user_context.py", line 58, in __call__
+    return await handler(event, data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\fsm\middleware.py", line 43, in __call__
+    return await handler(event, data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\event\telegram.py", line 126, in trigger
+    return await wrapped_inner(event, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 71, in call
+    return await wrapped()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\dispatcher.py", line 283, in _listen_update
+    return await self.propagate_event(update_type=update_type, event=event, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\router.py", line 161, in propagate_event
+    return await observer.wrap_outer_middleware(_wrapped, event=event, data=kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\router.py", line 153, in _wrapped
+    return await self._propagate_event(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\router.py", line 189, in _propagate_event
+    response = await router.propagate_event(update_type=update_type, event=event, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\router.py", line 161, in propagate_event
+    return await observer.wrap_outer_middleware(_wrapped, event=event, data=kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\router.py", line 153, in _wrapped
+    return await self._propagate_event(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\router.py", line 181, in _propagate_event
+    response = await observer.trigger(event, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\event\telegram.py", line 126, in trigger
+    return await wrapped_inner(event, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 71, in call
+    return await wrapped()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\OSINT\handlers\commands.py", line 23, in cmd_start
+    await db.ensure_user(
+    ...<3 lines>...
+    )
+  File "D:\Desktop\OSINT\database.py", line 65, in ensure_user
+    await self.db.execute("""
+    ...<3 lines>...
+    """, (user_id, username, first_name, time.time()))
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiosqlite\core.py", line 223, in execute
+    cursor = await self._execute(self._conn.execute, sql, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiosqlite\core.py", line 160, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiosqlite\core.py", line 63, in _connection_worker_thread
+    result = function()
+sqlite3.OperationalError: table users has no column named first_name
+2026-04-02 13:22:00,827 [INFO] __main__: Starting polling...
+2026-04-02 13:22:01,509 [INFO] __main__: Database connected
+2026-04-02 13:22:01,510 [INFO] __main__: Bot is ready
+2026-04-02 13:22:01,510 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 13:22:01,769 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 13:22:28,173 [INFO] aiogram.event: Update id=4438912 is handled. Duration 400 ms by bot id=8797949544
+2026-04-02 13:26:08,120 [INFO] aiogram.event: Update id=4438913 is handled. Duration 193 ms by bot id=8797949544
+2026-04-02 13:26:13,818 [INFO] aiogram.event: Update id=4438914 is handled. Duration 481 ms by bot id=8797949544
+2026-04-02 13:26:45,009 [INFO] aiogram.event: Update id=4438915 is handled. Duration 206 ms by bot id=8797949544
+2026-04-02 13:26:46,721 [INFO] aiogram.event: Update id=4438916 is handled. Duration 192 ms by bot id=8797949544
+2026-04-02 13:27:05,630 [INFO] aiogram.event: Update id=4438917 is handled. Duration 521 ms by bot id=8797949544
+2026-04-02 13:27:22,269 [INFO] aiogram.event: Update id=4438918 is handled. Duration 177 ms by bot id=8797949544
+2026-04-02 13:27:27,921 [INFO] aiogram.event: Update id=4438919 is handled. Duration 180 ms by bot id=8797949544
+2026-04-02 13:27:40,268 [INFO] aiogram.event: Update id=4438920 is handled. Duration 1221 ms by bot id=8797949544
+2026-04-02 13:28:44,991 [INFO] aiogram.event: Update id=4438921 is handled. Duration 183 ms by bot id=8797949544
+2026-04-02 13:28:46,901 [INFO] aiogram.event: Update id=4438922 is handled. Duration 204 ms by bot id=8797949544
+2026-04-02 13:28:51,064 [INFO] aiogram.event: Update id=4438923 is handled. Duration 547 ms by bot id=8797949544
+2026-04-02 13:40:24,324 [INFO] __main__: Starting polling...
+2026-04-02 13:40:24,328 [INFO] __main__: Database connected
+2026-04-02 13:40:24,329 [INFO] __main__: Bot is ready
+2026-04-02 13:40:24,329 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 13:40:24,584 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 13:40:52,172 [INFO] aiogram.event: Update id=4438924 is handled. Duration 272 ms by bot id=8797949544
+2026-04-02 13:40:56,937 [INFO] aiogram.event: Update id=4438925 is handled. Duration 201 ms by bot id=8797949544
+2026-04-02 13:41:08,749 [INFO] aiogram.event: Update id=4438926 is handled. Duration 136 ms by bot id=8797949544
+2026-04-02 13:50:41,843 [INFO] __main__: Starting polling...
+2026-04-02 13:50:41,849 [INFO] __main__: Database connected
+2026-04-02 13:50:41,849 [INFO] __main__: Bot is ready
+2026-04-02 13:50:41,849 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 13:50:42,101 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 13:50:59,051 [INFO] aiogram.event: Update id=4438927 is handled. Duration 329 ms by bot id=8797949544
+2026-04-02 13:51:02,269 [INFO] aiogram.event: Update id=4438928 is handled. Duration 332 ms by bot id=8797949544
+2026-04-02 13:51:07,507 [INFO] aiogram.event: Update id=4438929 is not handled. Duration 2 ms by bot id=8797949544
+2026-04-02 13:51:07,508 [ERROR] aiogram.event: Cause exception while process update id=4438929 by bot id=8797949544
+NameError: name 'ADMIN_IDS' is not defined
+Traceback (most recent call last):
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\dispatcher.py", line 320, in _process_update
+    response = await self.feed_update(bot, update, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\dispatcher.py", line 164, in feed_update
+    response = await self.update.wrap_outer_middleware(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+    )
+    ^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\middlewares\error.py", line 27, in __call__
+    return await handler(event, data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\middlewares\user_context.py", line 58, in __call__
+    return await handler(event, data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\fsm\middleware.py", line 43, in __call__
+    return await handler(event, data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\event\telegram.py", line 126, in trigger
+    return await wrapped_inner(event, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 71, in call
+    return await wrapped()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\dispatcher.py", line 283, in _listen_update
+    return await self.propagate_event(update_type=update_type, event=event, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\router.py", line 161, in propagate_event
+    return await observer.wrap_outer_middleware(_wrapped, event=event, data=kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\router.py", line 153, in _wrapped
+    return await self._propagate_event(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\router.py", line 189, in _propagate_event
+    response = await router.propagate_event(update_type=update_type, event=event, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\router.py", line 161, in propagate_event
+    return await observer.wrap_outer_middleware(_wrapped, event=event, data=kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\router.py", line 153, in _wrapped
+    return await self._propagate_event(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\router.py", line 181, in _propagate_event
+    response = await observer.trigger(event, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\event\telegram.py", line 126, in trigger
+    return await wrapped_inner(event, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\SEYRG\AppData\Local\Programs\Python\Python313\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 71, in call
+    return await wrapped()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\OSINT\handlers\search.py", line 55, in handle_search
+    if not rate_limiter.is_allowed(user_id):
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "D:\Desktop\OSINT\utils\rate_limit.py", line 13, in is_allowed
+    if user_id in ADMIN_IDS:
+                  ^^^^^^^^^
+NameError: name 'ADMIN_IDS' is not defined
+2026-04-02 13:54:05,916 [INFO] __main__: Starting polling...
+2026-04-02 13:54:05,920 [INFO] __main__: Database connected
+2026-04-02 13:54:05,921 [INFO] __main__: Bot is ready
+2026-04-02 13:54:05,921 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 13:54:06,178 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 13:54:16,654 [INFO] aiogram.event: Update id=4438930 is handled. Duration 311 ms by bot id=8797949544
+2026-04-02 13:54:24,234 [INFO] aiogram.event: Update id=4438931 is handled. Duration 203 ms by bot id=8797949544
+2026-04-02 13:54:28,992 [INFO] aiogram.event: Update id=4438932 is handled. Duration 120 ms by bot id=8797949544
+2026-04-02 13:58:57,998 [INFO] __main__: Starting polling...
+2026-04-02 13:58:58,003 [INFO] __main__: Database connected
+2026-04-02 13:58:58,003 [INFO] __main__: Bot is ready
+2026-04-02 13:58:58,004 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 13:58:58,257 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 13:59:23,865 [INFO] aiogram.event: Update id=4438933 is handled. Duration 300 ms by bot id=8797949544
+2026-04-02 13:59:25,640 [INFO] aiogram.event: Update id=4438934 is handled. Duration 299 ms by bot id=8797949544
+2026-04-02 13:59:31,833 [INFO] aiogram.event: Update id=4438935 is handled. Duration 116 ms by bot id=8797949544
+2026-04-02 14:06:38,318 [INFO] __main__: Starting polling...
+2026-04-02 14:06:38,322 [INFO] __main__: Database connected
+2026-04-02 14:06:38,323 [INFO] __main__: Bot is ready
+2026-04-02 14:06:38,323 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 14:06:38,624 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 14:07:06,164 [INFO] aiogram.event: Update id=4438936 is handled. Duration 264 ms by bot id=8797949544
+2026-04-02 14:07:10,892 [INFO] aiogram.event: Update id=4438937 is handled. Duration 202 ms by bot id=8797949544
+2026-04-02 14:07:15,690 [INFO] aiogram.event: Update id=4438938 is handled. Duration 420 ms by bot id=8797949544
+2026-04-02 14:08:10,708 [INFO] aiogram.event: Update id=4438939 is handled. Duration 566 ms by bot id=8797949544
+2026-04-02 14:20:51,247 [INFO] __main__: Starting polling...
+2026-04-02 14:20:51,251 [INFO] __main__: Database connected
+2026-04-02 14:20:51,251 [INFO] __main__: Bot is ready
+2026-04-02 14:20:51,252 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 14:20:51,494 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 14:21:34,401 [INFO] aiogram.event: Update id=4438940 is handled. Duration 271 ms by bot id=8797949544
+2026-04-02 14:21:37,265 [INFO] aiogram.event: Update id=4438941 is handled. Duration 194 ms by bot id=8797949544
+2026-04-02 14:21:45,036 [INFO] aiogram.event: Update id=4438942 is handled. Duration 3526 ms by bot id=8797949544
+2026-04-02 14:22:25,684 [INFO] aiogram.event: Update id=4438943 is handled. Duration 200 ms by bot id=8797949544
+2026-04-02 14:22:27,684 [INFO] aiogram.event: Update id=4438944 is handled. Duration 187 ms by bot id=8797949544
+2026-04-02 14:22:36,305 [INFO] aiogram.event: Update id=4438945 is handled. Duration 3867 ms by bot id=8797949544
+2026-04-02 14:23:21,202 [INFO] aiogram.event: Update id=4438946 is handled. Duration 191 ms by bot id=8797949544
+2026-04-02 14:23:22,661 [INFO] aiogram.event: Update id=4438947 is handled. Duration 194 ms by bot id=8797949544
+2026-04-02 14:23:29,970 [INFO] aiogram.event: Update id=4438948 is handled. Duration 3353 ms by bot id=8797949544
+2026-04-02 14:23:58,773 [INFO] aiogram.event: Update id=4438949 is handled. Duration 342 ms by bot id=8797949544
+2026-04-02 14:24:01,500 [INFO] aiogram.event: Update id=4438950 is handled. Duration 360 ms by bot id=8797949544
+2026-04-02 14:24:09,201 [INFO] aiogram.event: Update id=4438951 is handled. Duration 3504 ms by bot id=8797949544
+2026-04-02 14:24:48,629 [INFO] aiogram.event: Update id=4438952 is handled. Duration 185 ms by bot id=8797949544
+2026-04-02 14:24:50,367 [INFO] aiogram.event: Update id=4438953 is handled. Duration 373 ms by bot id=8797949544
+2026-04-02 14:24:57,496 [INFO] aiogram.event: Update id=4438954 is handled. Duration 3654 ms by bot id=8797949544
+2026-04-02 14:25:27,519 [INFO] aiogram.event: Update id=4438955 is handled. Duration 3749 ms by bot id=8797949544
+2026-04-02 14:25:48,087 [INFO] aiogram.event: Update id=4438956 is handled. Duration 181 ms by bot id=8797949544
+2026-04-02 14:25:49,934 [INFO] aiogram.event: Update id=4438957 is handled. Duration 297 ms by bot id=8797949544
+2026-04-02 14:25:57,774 [INFO] aiogram.event: Update id=4438958 is handled. Duration 3539 ms by bot id=8797949544
+2026-04-02 14:26:14,905 [INFO] aiogram.event: Update id=4438959 is handled. Duration 193 ms by bot id=8797949544
+2026-04-02 14:26:16,196 [INFO] aiogram.event: Update id=4438960 is handled. Duration 178 ms by bot id=8797949544
+2026-04-02 14:26:24,279 [INFO] aiogram.event: Update id=4438961 is handled. Duration 3802 ms by bot id=8797949544
+2026-04-02 14:32:15,960 [INFO] __main__: Starting polling...
+2026-04-02 14:32:15,977 [INFO] __main__: Database connected
+2026-04-02 14:32:16,012 [INFO] __main__: Bot is ready
+2026-04-02 14:32:16,079 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 14:32:17,020 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 14:32:31,124 [INFO] aiogram.event: Update id=4438962 is handled. Duration 255 ms by bot id=8797949544
+2026-04-02 14:32:52,695 [INFO] aiogram.event: Update id=4438963 is handled. Duration 188 ms by bot id=8797949544
+2026-04-02 14:33:00,339 [INFO] aiogram.event: Update id=4438964 is handled. Duration 3457 ms by bot id=8797949544
+2026-04-02 14:33:14,849 [INFO] aiogram.event: Update id=4438965 is handled. Duration 215 ms by bot id=8797949544
+2026-04-02 14:33:16,432 [INFO] aiogram.event: Update id=4438966 is handled. Duration 181 ms by bot id=8797949544
+2026-04-02 14:33:26,987 [INFO] aiogram.event: Update id=4438967 is handled. Duration 5138 ms by bot id=8797949544
+2026-04-02 14:48:28,821 [INFO] __main__: Starting polling...
+2026-04-02 14:48:28,826 [INFO] __main__: Database connected
+2026-04-02 14:48:28,826 [INFO] __main__: Bot is ready
+2026-04-02 14:48:28,827 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 14:48:29,067 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 14:49:06,192 [INFO] aiogram.event: Update id=4438968 is handled. Duration 275 ms by bot id=8797949544
+2026-04-02 14:49:08,139 [INFO] aiogram.event: Update id=4438969 is handled. Duration 191 ms by bot id=8797949544
+2026-04-02 14:49:16,112 [INFO] aiogram.event: Update id=4438970 is handled. Duration 3584 ms by bot id=8797949544
+2026-04-02 14:49:27,106 [INFO] aiogram.event: Update id=4438971 is handled. Duration 197 ms by bot id=8797949544
+2026-04-02 14:49:37,775 [INFO] aiogram.event: Update id=4438972 is handled. Duration 4204 ms by bot id=8797949544
+2026-04-02 14:52:43,184 [INFO] __main__: Starting polling...
+2026-04-02 14:52:43,189 [INFO] __main__: Database connected
+2026-04-02 14:52:43,189 [INFO] __main__: Bot is ready
+2026-04-02 14:52:43,189 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 14:52:43,445 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 14:53:00,185 [INFO] aiogram.event: Update id=4438973 is handled. Duration 265 ms by bot id=8797949544
+2026-04-02 14:53:01,517 [INFO] aiogram.event: Update id=4438974 is handled. Duration 243 ms by bot id=8797949544
+2026-04-02 14:53:07,753 [INFO] aiogram.event: Update id=4438975 is handled. Duration 3539 ms by bot id=8797949544
+2026-04-02 14:58:39,891 [INFO] __main__: Starting polling...
+2026-04-02 14:58:39,896 [INFO] __main__: Database connected
+2026-04-02 14:58:39,896 [INFO] __main__: Bot is ready
+2026-04-02 14:58:39,896 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 14:58:40,137 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 14:58:56,457 [INFO] aiogram.event: Update id=4438976 is handled. Duration 267 ms by bot id=8797949544
+2026-04-02 14:58:58,610 [INFO] aiogram.event: Update id=4438977 is handled. Duration 351 ms by bot id=8797949544
+2026-04-02 14:59:05,158 [INFO] aiogram.event: Update id=4438978 is handled. Duration 3513 ms by bot id=8797949544
+2026-04-02 15:07:45,386 [INFO] __main__: Starting polling...
+2026-04-02 15:07:45,390 [INFO] __main__: Database connected
+2026-04-02 15:07:45,390 [INFO] __main__: Bot is ready
+2026-04-02 15:07:45,391 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 15:07:45,724 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 15:08:03,934 [INFO] aiogram.event: Update id=4438979 is handled. Duration 265 ms by bot id=8797949544
+2026-04-02 15:08:05,958 [INFO] aiogram.event: Update id=4438980 is handled. Duration 195 ms by bot id=8797949544
+2026-04-02 15:08:19,342 [INFO] aiogram.event: Update id=4438981 is handled. Duration 8654 ms by bot id=8797949544
+2026-04-02 15:15:00,227 [INFO] __main__: Starting polling...
+2026-04-02 15:15:00,231 [INFO] __main__: Database connected
+2026-04-02 15:15:00,232 [INFO] __main__: Bot is ready
+2026-04-02 15:15:00,232 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 15:15:00,535 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 15:15:22,917 [INFO] aiogram.event: Update id=4438982 is handled. Duration 273 ms by bot id=8797949544
+2026-04-02 15:15:24,875 [INFO] aiogram.event: Update id=4438983 is handled. Duration 205 ms by bot id=8797949544
+2026-04-02 15:18:07,948 [INFO] aiogram.event: Update id=4438984 is handled. Duration 158300 ms by bot id=8797949544
+2026-04-02 15:19:09,080 [INFO] aiogram.event: Update id=4438985 is handled. Duration 186 ms by bot id=8797949544
+2026-04-02 15:19:11,112 [INFO] aiogram.event: Update id=4438986 is handled. Duration 198 ms by bot id=8797949544
+2026-04-02 15:19:16,817 [INFO] aiogram.event: Update id=4438987 is handled. Duration 1296 ms by bot id=8797949544
+2026-04-02 15:25:39,995 [INFO] __main__: Starting polling...
+2026-04-02 15:25:39,999 [INFO] __main__: Database connected
+2026-04-02 15:25:39,999 [INFO] __main__: Bot is ready
+2026-04-02 15:25:40,000 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 15:25:40,335 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 15:25:58,865 [INFO] aiogram.event: Update id=4438988 is handled. Duration 264 ms by bot id=8797949544
+2026-04-02 15:26:01,179 [INFO] aiogram.event: Update id=4438989 is handled. Duration 186 ms by bot id=8797949544
+2026-04-02 15:26:19,504 [INFO] aiogram.event: Update id=4438990 is handled. Duration 14150 ms by bot id=8797949544
+2026-04-02 15:28:15,982 [INFO] aiogram.event: Update id=4438991 is handled. Duration 194 ms by bot id=8797949544
+2026-04-02 15:28:38,898 [INFO] aiogram.event: Update id=4438992 is handled. Duration 189 ms by bot id=8797949544
+2026-04-02 15:31:07,492 [INFO] aiogram.event: Update id=4438993 is handled. Duration 144261 ms by bot id=8797949544
+2026-04-02 15:33:29,732 [INFO] aiogram.event: Update id=4438994 is handled. Duration 219 ms by bot id=8797949544
+2026-04-02 15:42:53,167 [INFO] __main__: Starting polling...
+2026-04-02 15:42:53,172 [INFO] __main__: Database connected
+2026-04-02 15:42:53,172 [INFO] __main__: Bot is ready
+2026-04-02 15:42:53,173 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 15:42:53,418 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 15:43:15,138 [INFO] aiogram.event: Update id=4438995 is handled. Duration 265 ms by bot id=8797949544
+2026-04-02 15:43:17,683 [INFO] aiogram.event: Update id=4438996 is handled. Duration 184 ms by bot id=8797949544
+2026-04-02 15:43:36,486 [INFO] aiogram.event: Update id=4438997 is handled. Duration 14326 ms by bot id=8797949544
+2026-04-02 15:44:00,395 [INFO] aiogram.event: Update id=4438998 is handled. Duration 178 ms by bot id=8797949544
+2026-04-02 15:44:02,144 [INFO] aiogram.event: Update id=4438999 is handled. Duration 186 ms by bot id=8797949544
+2026-04-02 15:44:41,290 [INFO] aiogram.event: Update id=4439000 is handled. Duration 14182 ms by bot id=8797949544
+2026-04-02 15:45:23,283 [INFO] aiogram.event: Update id=4439001 is handled. Duration 274 ms by bot id=8797949544
+2026-04-02 15:45:24,710 [INFO] aiogram.event: Update id=4439002 is handled. Duration 185 ms by bot id=8797949544
+2026-04-02 15:45:43,327 [INFO] aiogram.event: Update id=4439003 is handled. Duration 14421 ms by bot id=8797949544
+2026-04-02 15:46:18,842 [INFO] aiogram.event: Update id=4439004 is handled. Duration 190 ms by bot id=8797949544
+2026-04-02 15:46:21,133 [INFO] aiogram.event: Update id=4439005 is handled. Duration 182 ms by bot id=8797949544
+2026-04-02 15:46:38,490 [INFO] aiogram.event: Update id=4439006 is handled. Duration 595 ms by bot id=8797949544
+2026-04-02 15:46:44,660 [INFO] aiogram.event: Update id=4439007 is handled. Duration 190 ms by bot id=8797949544
+2026-04-02 15:46:47,383 [INFO] aiogram.event: Update id=4439008 is handled. Duration 241 ms by bot id=8797949544
+2026-04-02 15:49:40,793 [INFO] aiogram.event: Update id=4439009 is handled. Duration 155209 ms by bot id=8797949544
+2026-04-02 15:50:31,099 [INFO] aiogram.event: Update id=4439010 is handled. Duration 189 ms by bot id=8797949544
+2026-04-02 15:50:35,156 [INFO] aiogram.event: Update id=4439011 is handled. Duration 211 ms by bot id=8797949544
+2026-04-02 15:50:54,139 [INFO] aiogram.event: Update id=4439012 is handled. Duration 434 ms by bot id=8797949544
+2026-04-02 15:50:59,703 [INFO] aiogram.event: Update id=4439013 is handled. Duration 237 ms by bot id=8797949544
+2026-04-02 15:51:01,912 [INFO] aiogram.event: Update id=4439014 is handled. Duration 271 ms by bot id=8797949544
+2026-04-02 15:51:12,510 [INFO] aiogram.event: Update id=4439015 is handled. Duration 202 ms by bot id=8797949544
+2026-04-02 15:51:15,680 [INFO] aiogram.event: Update id=4439016 is handled. Duration 225 ms by bot id=8797949544
+2026-04-02 15:51:21,287 [INFO] aiogram.event: Update id=4439017 is handled. Duration 248 ms by bot id=8797949544
+2026-04-02 15:52:06,297 [INFO] aiogram.event: Update id=4439018 is handled. Duration 119 ms by bot id=8797949544
+2026-04-02 16:07:02,086 [INFO] __main__: Starting polling...
+2026-04-02 16:07:02,091 [INFO] __main__: Database connected
+2026-04-02 16:07:02,091 [INFO] __main__: Bot is ready
+2026-04-02 16:07:02,091 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 16:07:02,350 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 16:07:30,812 [INFO] aiogram.event: Update id=4439019 is handled. Duration 286 ms by bot id=8797949544
+2026-04-02 16:07:33,117 [INFO] aiogram.event: Update id=4439020 is handled. Duration 330 ms by bot id=8797949544
+2026-04-02 16:07:51,439 [INFO] aiogram.event: Update id=4439021 is handled. Duration 14356 ms by bot id=8797949544
+2026-04-02 16:07:58,421 [INFO] aiogram.event: Update id=4439022 is handled. Duration 200 ms by bot id=8797949544
+2026-04-02 16:08:31,236 [INFO] aiogram.event: Update id=4439023 is handled. Duration 182 ms by bot id=8797949544
+2026-04-02 16:08:48,855 [INFO] aiogram.event: Update id=4439024 is handled. Duration 14384 ms by bot id=8797949544
+2026-04-02 16:09:03,366 [INFO] aiogram.event: Update id=4439025 is handled. Duration 189 ms by bot id=8797949544
+2026-04-02 16:09:04,642 [INFO] aiogram.event: Update id=4439026 is handled. Duration 174 ms by bot id=8797949544
+2026-04-02 16:09:33,269 [INFO] aiogram.event: Update id=4439027 is handled. Duration 25544 ms by bot id=8797949544
+2026-04-02 16:18:51,529 [INFO] __main__: Starting polling...
+2026-04-02 16:18:51,534 [INFO] __main__: Database connected
+2026-04-02 16:18:51,534 [INFO] __main__: Bot is ready
+2026-04-02 16:18:51,534 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 16:18:51,788 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 16:19:19,625 [INFO] aiogram.event: Update id=4439028 is handled. Duration 269 ms by bot id=8797949544
+2026-04-02 16:19:28,902 [INFO] aiogram.event: Update id=4439029 is handled. Duration 199 ms by bot id=8797949544
+2026-04-02 16:22:16,218 [INFO] aiogram.event: Update id=4439030 is handled. Duration 164153 ms by bot id=8797949544
+2026-04-02 16:22:30,202 [INFO] aiogram.event: Update id=4439031 is handled. Duration 199 ms by bot id=8797949544
+2026-04-02 17:58:15,981 [INFO] __main__: Starting polling...
+2026-04-02 17:58:15,986 [INFO] __main__: Database connected
+2026-04-02 17:58:15,987 [INFO] __main__: Bot is ready
+2026-04-02 17:58:15,988 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 17:58:16,247 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 17:58:45,216 [INFO] aiogram.event: Update id=4439032 is handled. Duration 250 ms by bot id=8797949544
+2026-04-02 17:58:48,178 [INFO] aiogram.event: Update id=4439033 is handled. Duration 251 ms by bot id=8797949544
+2026-04-02 17:59:09,077 [INFO] aiogram.event: Update id=4439034 is handled. Duration 14208 ms by bot id=8797949544
+2026-04-02 17:59:48,624 [INFO] aiogram.event: Update id=4439035 is handled. Duration 203 ms by bot id=8797949544
+2026-04-02 17:59:49,701 [INFO] aiogram.event: Update id=4439036 is handled. Duration 191 ms by bot id=8797949544
+2026-04-02 18:00:07,058 [INFO] aiogram.event: Update id=4439037 is handled. Duration 14286 ms by bot id=8797949544
+2026-04-02 18:00:41,678 [INFO] aiogram.event: Update id=4439038 is handled. Duration 191 ms by bot id=8797949544
+2026-04-02 18:00:43,776 [INFO] aiogram.event: Update id=4439039 is handled. Duration 175 ms by bot id=8797949544
+2026-04-02 18:01:02,032 [INFO] aiogram.event: Update id=4439040 is handled. Duration 15463 ms by bot id=8797949544
+2026-04-02 18:01:06,068 [INFO] aiogram.event: Update id=4439041 is handled. Duration 191 ms by bot id=8797949544
+2026-04-02 18:01:08,909 [INFO] aiogram.event: Update id=4439042 is handled. Duration 220 ms by bot id=8797949544
+2026-04-02 18:01:37,602 [INFO] aiogram.event: Update id=4439043 is handled. Duration 14282 ms by bot id=8797949544
+2026-04-02 18:01:48,648 [INFO] aiogram.event: Update id=4439044 is handled. Duration 213 ms by bot id=8797949544
+2026-04-02 18:02:28,815 [INFO] aiogram.event: Update id=4439045 is handled. Duration 185 ms by bot id=8797949544
+2026-04-02 18:05:26,994 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-04-02 18:05:27,411 [INFO] aiogram.event: Update id=4439046 is handled. Duration 174275 ms by bot id=8797949544
+2026-04-02 18:25:40,209 [INFO] aiogram.event: Update id=4439047 is handled. Duration 348 ms by bot id=8797949544
+2026-04-02 18:25:42,843 [INFO] aiogram.event: Update id=4439048 is handled. Duration 194 ms by bot id=8797949544
+2026-04-02 18:26:01,468 [INFO] aiogram.event: Update id=4439049 is handled. Duration 406 ms by bot id=8797949544
+2026-04-02 18:26:10,875 [INFO] aiogram.event: Update id=4439050 is handled. Duration 253 ms by bot id=8797949544
+2026-04-02 18:26:12,575 [INFO] aiogram.event: Update id=4439051 is handled. Duration 201 ms by bot id=8797949544
+2026-04-02 18:26:37,704 [INFO] aiogram.event: Update id=4439052 is handled. Duration 410 ms by bot id=8797949544
+2026-04-02 18:26:40,921 [INFO] aiogram.event: Update id=4439053 is handled. Duration 179 ms by bot id=8797949544
+2026-04-02 18:26:44,184 [INFO] aiogram.event: Update id=4439054 is handled. Duration 192 ms by bot id=8797949544
+2026-04-02 18:26:50,208 [INFO] aiogram.event: Update id=4439055 is handled. Duration 177 ms by bot id=8797949544
+2026-04-02 18:26:54,491 [INFO] aiogram.event: Update id=4439056 is handled. Duration 443 ms by bot id=8797949544
+2026-04-02 18:32:38,949 [INFO] __main__: Starting polling...
+2026-04-02 18:32:38,954 [INFO] __main__: Database connected
+2026-04-02 18:32:38,955 [INFO] __main__: Bot is ready
+2026-04-02 18:32:38,955 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 18:32:39,229 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 18:32:53,005 [INFO] aiogram.event: Update id=4439057 is handled. Duration 258 ms by bot id=8797949544
+2026-04-02 18:33:13,496 [INFO] aiogram.event: Update id=4439058 is handled. Duration 199 ms by bot id=8797949544
+2026-04-02 18:33:19,038 [INFO] aiogram.event: Update id=4439059 is handled. Duration 511 ms by bot id=8797949544
+2026-04-02 18:33:34,809 [INFO] aiogram.event: Update id=4439060 is handled. Duration 180 ms by bot id=8797949544
+2026-04-02 18:33:35,951 [INFO] aiogram.event: Update id=4439061 is handled. Duration 191 ms by bot id=8797949544
+2026-04-02 18:33:54,130 [INFO] aiogram.event: Update id=4439062 is handled. Duration 14607 ms by bot id=8797949544
+2026-04-02 18:35:20,289 [INFO] aiogram.event: Update id=4439063 is handled. Duration 174 ms by bot id=8797949544
+2026-04-02 18:35:21,456 [INFO] aiogram.event: Update id=4439064 is handled. Duration 227 ms by bot id=8797949544
+2026-04-02 18:35:39,225 [INFO] aiogram.event: Update id=4439065 is handled. Duration 14176 ms by bot id=8797949544
+2026-04-02 18:35:46,736 [INFO] aiogram.event: Update id=4439066 is handled. Duration 194 ms by bot id=8797949544
+2026-04-02 18:36:34,289 [INFO] aiogram.event: Update id=4439067 is handled. Duration 320 ms by bot id=8797949544
+2026-04-02 18:39:09,555 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-04-02 18:39:10,191 [INFO] aiogram.event: Update id=4439068 is handled. Duration 152361 ms by bot id=8797949544
+2026-04-02 19:01:43,798 [INFO] __main__: Starting polling...
+2026-04-02 19:01:43,806 [INFO] __main__: Database connected
+2026-04-02 19:01:43,807 [INFO] __main__: Bot is ready
+2026-04-02 19:01:43,807 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 19:01:44,141 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 19:02:04,665 [INFO] aiogram.event: Update id=4439069 is handled. Duration 273 ms by bot id=8797949544
+2026-04-02 19:02:06,820 [INFO] aiogram.event: Update id=4439070 is handled. Duration 193 ms by bot id=8797949544
+2026-04-02 19:04:42,428 [INFO] httpx: HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-02 19:04:55,576 [INFO] aiogram.event: Update id=4439071 is handled. Duration 164698 ms by bot id=8797949544
+2026-04-02 19:05:53,461 [INFO] aiogram.event: Update id=4439072 is handled. Duration 211 ms by bot id=8797949544
+2026-04-02 19:06:09,611 [INFO] aiogram.event: Update id=4439073 is handled. Duration 177 ms by bot id=8797949544
+2026-04-02 19:06:27,609 [INFO] aiogram.event: Update id=4439074 is handled. Duration 14664 ms by bot id=8797949544
+2026-04-02 19:06:45,159 [INFO] aiogram.event: Update id=4439075 is handled. Duration 219 ms by bot id=8797949544
+2026-04-02 19:06:46,949 [INFO] aiogram.event: Update id=4439076 is handled. Duration 175 ms by bot id=8797949544
+2026-04-02 19:06:51,186 [INFO] aiogram.event: Update id=4439077 is handled. Duration 523 ms by bot id=8797949544
+2026-04-02 19:18:10,641 [INFO] __main__: Starting polling...
+2026-04-02 19:18:10,645 [INFO] __main__: Database connected
+2026-04-02 19:18:10,645 [INFO] __main__: Bot is ready
+2026-04-02 19:18:10,645 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 19:18:10,892 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 19:18:44,330 [INFO] aiogram.event: Update id=4439078 is handled. Duration 274 ms by bot id=8797949544
+2026-04-02 19:18:47,544 [INFO] aiogram.event: Update id=4439079 is handled. Duration 281 ms by bot id=8797949544
+2026-04-02 19:21:28,239 [INFO] httpx: HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-02 19:21:48,877 [INFO] aiogram.event: Update id=4439080 is handled. Duration 177244 ms by bot id=8797949544
+2026-04-02 19:23:48,715 [INFO] aiogram.event: Update id=4439081 is handled. Duration 192 ms by bot id=8797949544
+2026-04-02 19:36:23,441 [INFO] __main__: Starting polling...
+2026-04-02 19:36:23,446 [INFO] __main__: Database connected
+2026-04-02 19:36:23,446 [INFO] __main__: Bot is ready
+2026-04-02 19:36:23,447 [INFO] aiogram.dispatcher: Start polling
+2026-04-02 19:36:23,694 [INFO] aiogram.dispatcher: Run polling for bot @youosint_bot id=8797949544 - 'YouOsint'
+2026-04-02 19:37:15,246 [INFO] aiogram.event: Update id=4439082 is handled. Duration 267 ms by bot id=8797949544
+2026-04-02 19:37:17,109 [INFO] aiogram.event: Update id=4439083 is handled. Duration 181 ms by bot id=8797949544
+2026-04-02 19:40:07,081 [INFO] httpx: HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-02 19:40:33,286 [INFO] aiogram.event: Update id=4439084 is handled. Duration 192483 ms by bot id=8797949544
