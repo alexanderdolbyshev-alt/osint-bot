@@ -189,6 +189,8 @@ async def _handle_phone(message: Message, phone: str):
         info = basic_phone_info(phone)
         sources = await search_phone_sources(phone)
         leaks = await check_leaks(phone)
+
+        # 👉 AI вызываем ПОСЛЕ всех данных
         ai = await analyze_phone_ai(phone, info, leaks, sources)
 
         elapsed = time.time() - start
@@ -206,7 +208,7 @@ async def _handle_phone(message: Message, phone: str):
 📡 Оператор: {info["operator"]}
 """
 
-        # старый вывод (оставляем)
+        # старый вывод
         response += "\n" + format_phone_results(phone, results)
 
         # 🌐 источники
@@ -225,6 +227,11 @@ async def _handle_phone(message: Message, phone: str):
         else:
             response += "✅ Не найдено\n"
 
+        # 🔥 ВОТ ЭТОГО У ТЕБЯ НЕ БЫЛО
+        response += "\n\n🧠 AI профиль:\n"
+        response += ai
+
+        # время В САМЫЙ КОНЕЦ
         response += f"\n\n⏱ Время: {elapsed:.1f} сек."
 
         await _safe_send(status, response)
