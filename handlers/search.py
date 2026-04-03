@@ -24,6 +24,8 @@ from modules.username_search import search_username
 from modules.email_search import search_email
 from modules.phone_search import search_phone
 from modules.ai_openrouter import analyze_username_ai
+from modules.phone_search import search_phone, basic_phone_info, search_phone_sources
+from modules.leak_check import check_leaks
 
 router = Router()
 
@@ -174,16 +176,53 @@ async def _handle_email(message: Message, email: str):
 
 async def _handle_phone(message: Message, phone: str):
 
-    status = await message.answer("📱 Проверка номера...")
+    status = await message.answer("📱 Анализ номера...")
 
     start = time.time()
 
     try:
+        # базовый поиск
         results = await search_phone(phone)
+
+        # 🔥 НОВЫЕ ФУНКЦИИ
+        info = basic_phone_info(phone)
+        sources = await search_phone_sources(phone)
+        leaks = await check_leaks(phone)
 
         elapsed = time.time() - start
 
-        response = format_phone_results(phone, results)
+        # ═══════════════════════════════
+        # ФОРМИРУЕМ ОТВЕТ
+        # ═══════════════════════════════
+
+        response = f"""
+📱 Номер: {phone}
+
+📊 Базовая информация:
+✔️ Валидность: {"Да" if info["valid"] else "Нет"}
+🌍 Страна: {info["country"]}
+📡 Оператор: {info["operator"]}
+"""
+
+        # старый вывод (оставляем)
+        response += "\n" + format_phone_results(phone, results)
+
+        # 🌐 источники
+        response += "\n\n🌐 Источники:\n"
+        if sources:
+            for s in sources:
+                response += f"- {s['site']} ({s['hint']})\n"
+        else:
+            response += "❌ Не найдено\n"
+
+        # 💣 утечки
+        response += "\n💣 Утечки:\n"
+        if leaks["found"]:
+            for l in leaks["sources"]:
+                response += f"- {l}\n"
+        else:
+            response += "✅ Не найдено\n"
+
         response += f"\n\n⏱ Время: {elapsed:.1f} сек."
 
         await _safe_send(status, response)

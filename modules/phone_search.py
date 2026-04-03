@@ -140,6 +140,21 @@ async def _phoneinfoga_scan(phone: str) -> list:
         return results if results else None
     except Exception:
         return None
+        
+        async def search_phone_sources(phone: str):
+    """
+    Поиск источников по номеру
+    """
+
+    results = []
+
+    if phone.startswith("+7"):
+        results.append({
+            "site": "Telegram",
+            "hint": "возможно аккаунт существует"
+        })
+
+    return results
 
 
 def _phoneinfoga_available() -> bool:
