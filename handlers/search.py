@@ -130,7 +130,11 @@ async def _handle_username(message: Message, username: str):
         response += "\n\n🧠 AI Анализ:\n" + analysis
         response += f"\n\n⏱ Время: {elapsed:.1f} сек."
 
-        await _safe_send(status, response)
+        await _safe_send(
+    status,
+    response,
+    reply_markup=main_keyboard()
+)
 
         await db.log_search(
             message.from_user.id, "username", username, len(found_sites)
