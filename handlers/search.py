@@ -26,6 +26,7 @@ from modules.phone_search import search_phone
 from modules.ai_openrouter import analyze_username_ai
 from modules.phone_search import search_phone, basic_phone_info, search_phone_sources
 from modules.leak_check import check_leaks
+from modules.ai_phone import analyze_phone_ai
 
 router = Router()
 
@@ -188,6 +189,7 @@ async def _handle_phone(message: Message, phone: str):
         info = basic_phone_info(phone)
         sources = await search_phone_sources(phone)
         leaks = await check_leaks(phone)
+        ai = await analyze_phone_ai(phone, info, leaks, sources)
 
         elapsed = time.time() - start
 
