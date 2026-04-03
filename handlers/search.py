@@ -27,6 +27,7 @@ from modules.ai_openrouter import analyze_username_ai
 from modules.phone_search import search_phone, basic_phone_info, search_phone_sources
 from modules.leak_check import check_leaks
 from modules.ai_phone import analyze_phone_ai
+from keyboards.inline import main_menu_keyboard, back_to_menu_keyboard
 
 router = Router()
 
@@ -238,7 +239,11 @@ async def _handle_phone(message: Message, phone: str):
         # время В САМЫЙ КОНЕЦ
         response += f"\n\n⏱ Время: {elapsed:.1f} сек."
 
-        await _safe_send(status, response)
+        await _safe_send(
+    status,
+    response,
+    reply_markup=back_to_menu_keyboard()
+)
 
         await db.log_search(
             message.from_user.id,
@@ -302,7 +307,7 @@ def _progress_bar(percent: int) -> str:
 # SAFE SEND
 # ═══════════════════════════════════════════════════════
 
-async def _safe_send(status_msg: Message, text: str):
+async def _safe_send(status_msg: Message, text: str, reply_markup=None):
 
     chunks = split_message(text, 4000)
 
@@ -311,5 +316,15 @@ async def _safe_send(status_msg: Message, text: str):
     except:
         pass
 
-    for chunk in chunks:
-        await status_msg.answer(chunk, disable_web_page_preview=True)
+    for i, chunk in enumerate(chunks):
+        if i == len(chunks) - 1:
+            await status_msg.answer(
+                chunk,
+                disable_web_page_preview=True,
+                reply_markup=reply_markup
+            )
+        else:
+            await status_msg.answer(
+                chunk,
+                disable_web_page_preview=True
+            )
