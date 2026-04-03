@@ -16,22 +16,28 @@ from utils.formatter import (
     format_error,
     split_message,
 )
+
+# ✅ ПРАВИЛЬНЫЙ ИМПОРТ
 from keyboards.inline import (
+    main_menu_keyboard,
     back_to_menu_keyboard,
     paywall_keyboard,
 )
+
 from modules.username_search import search_username
 from modules.email_search import search_email
-from modules.phone_search import search_phone
-from modules.ai_openrouter import analyze_username_ai
-from modules.phone_search import search_phone, basic_phone_info, search_phone_sources
+from modules.phone_search import (
+    search_phone,
+    basic_phone_info,
+    search_phone_sources,
+)
 from modules.leak_check import check_leaks
+from modules.ai_openrouter import analyze_username_ai
 from modules.ai_phone import analyze_phone_ai
-from keyboards.inline import main_menu_keyboard, back_to_menu_keyboard
 
 router = Router()
 
-# ✅ АДМИНЫ ИЗ ENV
+# ✅ АДМИНЫ
 ADMIN_IDS = list(map(int, os.getenv("ADMIN_IDS", "0").split(",")))
 
 EMAIL_RE = re.compile(r"^[^@]+@[^@]+\.[^@]+$")
@@ -67,7 +73,6 @@ async def handle_search(message: Message):
     # лимиты
     access = await db.can_search(user_id, FREE_SEARCHES_TOTAL)
 
-    # ✅ ПРОПУСК ЛИМИТА ДЛЯ АДМИНОВ
     if user_id not in ADMIN_IDS:
         if not access["allowed"]:
             await message.answer(
@@ -119,23 +124,20 @@ async def _handle_username(message: Message, username: str):
 
         response = format_username_results(username, found_sites, all_sites)
 
-        async def run_ai():
-            try:
-                return await analyze_username_ai(username, found_sites)
-            except:
-                return "❌ AI недоступен"
-
-        ai_task = asyncio.create_task(run_ai())
-        analysis = await ai_task
+        # AI
+        try:
+            analysis = await analyze_username_ai(username, found_sites)
+        except:
+            analysis = "❌ AI недоступен"
 
         response += "\n\n🧠 AI Анализ:\n" + analysis
         response += f"\n\n⏱ Время: {elapsed:.1f} сек."
 
         await _safe_send(
-    status,
-    response,
-    reply_markup=main_keyboard()
-)
+            status,
+            response,
+            reply_markup=main_menu_keyboard()  # ✅ фикс
+        )
 
         await db.log_search(
             message.from_user.id, "username", username, len(found_sites)
@@ -163,13 +165,10 @@ async def _handle_email(message: Message, email: str):
         response = format_email_results(email, results)
         response += f"\n\n⏱ Время: {elapsed:.1f} сек."
 
-        await _safe_send(status, response)
-
-        await db.log_search(
-            message.from_user.id,
-            "email",
-            email,
-            len([r for r in results if r.get("exists")])
+        await _safe_send(
+            status,
+            response,
+            reply_markup=back_to_menu_keyboard()  # ✅ добавили
         )
 
     except Exception as e:
@@ -187,22 +186,15 @@ async def _handle_phone(message: Message, phone: str):
     start = time.time()
 
     try:
-        # базовый поиск
         results = await search_phone(phone)
 
-        # 🔥 НОВЫЕ ФУНКЦИИ
         info = basic_phone_info(phone)
         sources = await search_phone_sources(phone)
         leaks = await check_leaks(phone)
 
-        # 👉 AI вызываем ПОСЛЕ всех данных
         ai = await analyze_phone_ai(phone, info, leaks, sources)
 
         elapsed = time.time() - start
-
-        # ═══════════════════════════════
-        # ФОРМИРУЕМ ОТВЕТ
-        # ═══════════════════════════════
 
         response = f"""
 📱 Номер: {phone}
@@ -213,10 +205,8 @@ async def _handle_phone(message: Message, phone: str):
 📡 Оператор: {info["operator"]}
 """
 
-        # старый вывод
         response += "\n" + format_phone_results(phone, results)
 
-        # 🌐 источники
         response += "\n\n🌐 Источники:\n"
         if sources:
             for s in sources:
@@ -224,7 +214,6 @@ async def _handle_phone(message: Message, phone: str):
         else:
             response += "❌ Не найдено\n"
 
-        # 💣 утечки
         response += "\n💣 Утечки:\n"
         if leaks["found"]:
             for l in leaks["sources"]:
@@ -232,18 +221,16 @@ async def _handle_phone(message: Message, phone: str):
         else:
             response += "✅ Не найдено\n"
 
-        # 🔥 ВОТ ЭТОГО У ТЕБЯ НЕ БЫЛО
         response += "\n\n🧠 AI профиль:\n"
         response += ai
 
-        # время В САМЫЙ КОНЕЦ
         response += f"\n\n⏱ Время: {elapsed:.1f} сек."
 
         await _safe_send(
-    status,
-    response,
-    reply_markup=back_to_menu_keyboard()
-)
+            status,
+            response,
+            reply_markup=back_to_menu_keyboard()  # ✅ фикс
+        )
 
         await db.log_search(
             message.from_user.id,
@@ -280,8 +267,7 @@ async def _animate_progress(status_msg: Message, query: str):
 
             text = (
                 f"{step}...\n"
-                f"🟢 Статус: активный\n\n"
-                f"{bar} {percent}%\n\n"
+                f"{bar} {percent}%\n"
                 f"🔎 {query}"
             )
 
@@ -291,7 +277,7 @@ async def _animate_progress(status_msg: Message, query: str):
                 break
 
             progress += 1
-            await asyncio.sleep(3)
+            await asyncio.sleep(2)
 
     except asyncio.CancelledError:
         pass
@@ -317,14 +303,8 @@ async def _safe_send(status_msg: Message, text: str, reply_markup=None):
         pass
 
     for i, chunk in enumerate(chunks):
-        if i == len(chunks) - 1:
-            await status_msg.answer(
-                chunk,
-                disable_web_page_preview=True,
-                reply_markup=reply_markup
-            )
-        else:
-            await status_msg.answer(
-                chunk,
-                disable_web_page_preview=True
-            )
+        await status_msg.answer(
+            chunk,
+            disable_web_page_preview=True,
+            reply_markup=reply_markup if i == len(chunks) - 1 else None
+        )
