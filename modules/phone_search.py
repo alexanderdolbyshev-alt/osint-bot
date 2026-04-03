@@ -8,6 +8,13 @@ from phonenumbers import (
     number_type, PhoneNumberType
 )
 
+from config import PHONEINFOGA_PATH
+
+
+# ─────────────────────────
+# БАЗОВАЯ ИНФА
+# ─────────────────────────
+
 def basic_phone_info(phone: str):
     try:
         parsed = phonenumbers.parse(phone, None)
@@ -25,7 +32,10 @@ def basic_phone_info(phone: str):
             "operator": "Неизвестно",
         }
 
-from config import PHONEINFOGA_PATH
+
+# ─────────────────────────
+# ТИПЫ НОМЕРОВ
+# ─────────────────────────
 
 LINE_TYPES = {
     PhoneNumberType.FIXED_LINE: "Стационарный",
@@ -43,13 +53,21 @@ LINE_TYPES = {
 }
 
 
+# ─────────────────────────
+# ОСНОВНОЙ ПОИСК
+# ─────────────────────────
+
 async def search_phone(phone: str) -> dict:
     result = {
         "valid": False,
-        "country": None, "carrier": None,
-        "line_type": None, "international": None,
-        "local": None, "timezone": None,
-        "country_code": None, "region_code": None,
+        "country": None,
+        "carrier": None,
+        "line_type": None,
+        "international": None,
+        "local": None,
+        "timezone": None,
+        "country_code": None,
+        "region_code": None,
         "phoneinfoga": None,
     }
 
@@ -79,15 +97,17 @@ async def search_phone(phone: str) -> dict:
 
         result["valid"] = True
 
-        country = geocoder.description_for_number(parsed, "ru")
-        if not country:
-            country = geocoder.description_for_number(parsed, "en")
-        result["country"] = country or "Неизвестна"
+        result["country"] = (
+            geocoder.description_for_number(parsed, "ru")
+            or geocoder.description_for_number(parsed, "en")
+            or "Неизвестна"
+        )
 
-        c_name = carrier.name_for_number(parsed, "ru")
-        if not c_name:
-            c_name = carrier.name_for_number(parsed, "en")
-        result["carrier"] = c_name or "Неизвестен"
+        result["carrier"] = (
+            carrier.name_for_number(parsed, "ru")
+            or carrier.name_for_number(parsed, "en")
+            or "Неизвестен"
+        )
 
         line = number_type(parsed)
         result["line_type"] = LINE_TYPES.get(line, "Неизвестный")
@@ -95,6 +115,7 @@ async def search_phone(phone: str) -> dict:
         result["international"] = phonenumbers.format_number(
             parsed, phonenumbers.PhoneNumberFormat.INTERNATIONAL
         )
+
         result["local"] = phonenumbers.format_number(
             parsed, phonenumbers.PhoneNumberFormat.NATIONAL
         )
@@ -111,14 +132,16 @@ async def search_phone(phone: str) -> dict:
         return result
 
     if _phoneinfoga_available():
-        infoga = await _phoneinfoga_scan(
-            result.get("international", phone)
-        )
+        infoga = await _phoneinfoga_scan(result.get("international", phone))
         if infoga:
             result["phoneinfoga"] = infoga
 
     return result
 
+
+# ─────────────────────────
+# PHONEINFOGA
+# ─────────────────────────
 
 async def _phoneinfoga_scan(phone: str) -> list:
     try:
@@ -127,25 +150,32 @@ async def _phoneinfoga_scan(phone: str) -> list:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
+
         stdout, stderr = await asyncio.wait_for(
             process.communicate(), timeout=30
         )
+
         output = stdout.decode("utf-8", errors="ignore")
+
         results = []
         skip = ("Running", "Scanning", "[i]", "phoneinfoga")
+
         for line in output.strip().split("\n"):
             line = line.strip()
             if line and not any(line.startswith(p) for p in skip):
                 results.append(line)
+
         return results if results else None
+
     except Exception:
         return None
-        
-        async def search_phone_sources(phone: str):
-    """
-    Поиск источников по номеру
-    """
 
+
+# ─────────────────────────
+# НОВОЕ: ИСТОЧНИКИ
+# ─────────────────────────
+
+async def search_phone_sources(phone: str):
     results = []
 
     if phone.startswith("+7"):
@@ -156,6 +186,10 @@ async def _phoneinfoga_scan(phone: str) -> list:
 
     return results
 
+
+# ─────────────────────────
+# ПРОВЕРКА PHONEINFOGA
+# ─────────────────────────
 
 def _phoneinfoga_available() -> bool:
     return shutil.which(PHONEINFOGA_PATH) is not None
