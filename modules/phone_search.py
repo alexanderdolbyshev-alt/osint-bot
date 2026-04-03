@@ -8,6 +8,23 @@ from phonenumbers import (
     number_type, PhoneNumberType
 )
 
+def basic_phone_info(phone: str):
+    try:
+        parsed = phonenumbers.parse(phone, None)
+
+        return {
+            "valid": phonenumbers.is_valid_number(parsed),
+            "country": geocoder.description_for_number(parsed, "ru") or "Неизвестно",
+            "operator": carrier.name_for_number(parsed, "ru") or "Неизвестно",
+        }
+
+    except Exception:
+        return {
+            "valid": False,
+            "country": "Неизвестно",
+            "operator": "Неизвестно",
+        }
+
 from config import PHONEINFOGA_PATH
 
 LINE_TYPES = {
