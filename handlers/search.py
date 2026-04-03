@@ -34,6 +34,7 @@ from modules.phone_search import (
 from modules.leak_check import check_leaks
 from modules.ai_openrouter import analyze_username_ai
 from modules.ai_phone import analyze_phone_ai
+from utils.cache import get_cache, set_cache
 
 router = Router()
 
@@ -186,20 +187,42 @@ async def _handle_phone(message: Message, phone: str):
     start = time.time()
 
     try:
-        results = await search_phone(phone)
+        # ⚡ КЕШ
+        cache_key = f"phone:{phone}"
+        cached = get_cache(cache_key)
+
+        if cached:
+            await status.delete()
+            await message.answer(
+                "⚡ Найдено в кеше\n\n" + cached,
+                reply_markup=back_to_menu_keyboard()
+            )
+            return
+
+        # ⚡ ПАРАЛЛЕЛЬНЫЙ ЗАПУСК (x2 быстрее)
+        results, sources, leaks = await asyncio.gather(
+            search_phone(phone),
+            search_phone_sources(phone),
+            check_leaks(phone)
+        )
 
         info = basic_phone_info(phone)
-        sources = await search_phone_sources(phone)
-        leaks = await check_leaks(phone)
 
-        ai = await analyze_phone_ai(phone, info, leaks, sources)
+        # 🧠 AI
+        try:
+            ai = await analyze_phone_ai(phone, info, leaks, sources)
+        except:
+            ai = "❌ AI недоступен"
 
         elapsed = time.time() - start
 
+        # 🎯 КРАСИВЫЙ UI
         response = f"""
-📱 Номер: {phone}
+📱 **АНАЛИЗ НОМЕРА**
+━━━━━━━━━━━━━━━━━━━
+📞 `{phone}`
 
-📊 Базовая информация:
+📊 **Основное**
 ✔️ Валидность: {"Да" if info["valid"] else "Нет"}
 🌍 Страна: {info["country"]}
 📡 Оператор: {info["operator"]}
@@ -207,29 +230,38 @@ async def _handle_phone(message: Message, phone: str):
 
         response += "\n" + format_phone_results(phone, results)
 
-        response += "\n\n🌐 Источники:\n"
+        # 🌐 Источники
+        response += "\n\n🌐 **Источники**\n"
         if sources:
-            for s in sources:
-                response += f"- {s['site']} ({s['hint']})\n"
+            for s in sources[:10]:
+                response += f"• {s['site']} ({s['hint']})\n"
         else:
             response += "❌ Не найдено\n"
 
-        response += "\n💣 Утечки:\n"
-        if leaks["found"]:
-            for l in leaks["sources"]:
-                response += f"- {l}\n"
+        # 💣 Утечки
+        response += "\n💣 **Утечки**\n"
+        if leaks.get("found"):
+            for l in leaks.get("sources", [])[:10]:
+                response += f"• {l}\n"
         else:
             response += "✅ Не найдено\n"
 
-        response += "\n\n🧠 AI профиль:\n"
+        # 🧠 AI
+        response += "\n🧠 **AI профиль**\n"
         response += ai
 
-        response += f"\n\n⏱ Время: {elapsed:.1f} сек."
+        # ⏱ время
+        response += f"\n\n⏱ {elapsed:.1f} сек."
+        response += "\n━━━━━━━━━━━━━━━━━━━"
+        response += "\n⚡ Powered by OSINT Engine"
+
+        # 💾 сохраняем в кеш
+        set_cache(cache_key, response)
 
         await _safe_send(
             status,
             response,
-            reply_markup=back_to_menu_keyboard()  # ✅ фикс
+            reply_markup=back_to_menu_keyboard()
         )
 
         await db.log_search(
