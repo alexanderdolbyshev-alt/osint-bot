@@ -2,7 +2,6 @@ import re
 import asyncio
 import time
 import os
-import random
 
 from aiogram import Router
 from aiogram.types import Message
@@ -18,7 +17,6 @@ from keyboards.inline import (
 
 from modules.username_search import search_username
 from modules.username_osint import search_username_socials
-from modules.leak_check import check_leaks
 from modules.ai_openrouter import analyze_username_ai
 from modules.telegram_osint import get_telegram_info
 
@@ -46,26 +44,21 @@ def render_status(progress, modules):
     return text
 
 
-# ================= MODULE PROGRESS =================
+# ================= PROGRESS LOOP =================
 
 async def module_progress_loop(msg, tasks, modules):
-    progress = 0
-
     while True:
         done = sum(t.done() for t in tasks)
         total = len(tasks)
 
-        progress = int((done / total) * 80)
+        progress = int((done / total) * 85)
 
-        # обновляем статусы
         if tasks[0].done():
             modules["📡 Databases"] = "✅ DONE"
         if tasks[1].done():
             modules["🌍 Socials"] = "✅ DONE"
         if tasks[2].done():
             modules["📲 Telegram"] = "✅ DONE"
-        if tasks[3].done():
-            modules["💣 Leaks"] = "✅ DONE"
 
         try:
             await msg.edit_text(render_status(progress, modules))
@@ -94,18 +87,38 @@ async def handle_search(message: Message):
         message.from_user.first_name
     )
 
+    if not rate_limiter.is_allowed(user_id):
+        wait = rate_limiter.seconds_until_reset(user_id)
+        await message.answer(f"⏳ Подожди {wait} сек.")
+        return
+
+    access = await db.can_search(user_id, FREE_SEARCHES_TOTAL)
+
+    if user_id not in ADMIN_IDS:
+        if not access["allowed"]:
+            await message.answer(
+                "🚫 Лимит исчерпан\n\nКупи доступ 👇",
+                reply_markup=paywall_keyboard()
+            )
+            return
+
+    text = text.strip()
+
     if text.startswith("@"):
         await _handle_username(message, text.lstrip("@"))
 
     elif USERNAME_RE.match(text):
         await _handle_username(message, text)
 
+    else:
+        await message.answer("❓ Не понял формат")
+
 
 # ================= USERNAME =================
 
 async def _handle_username(message, username: str):
 
-    status = await message.answer("💀 starting darknet scan...")
+    status = await message.answer("🚀 Запуск OSINT...")
 
     start = time.time()
 
@@ -114,47 +127,80 @@ async def _handle_username(message, username: str):
             "📡 Databases": "⏳ SCANNING",
             "🌍 Socials": "⏳ SCANNING",
             "📲 Telegram": "⏳ SCANNING",
-            "💣 Leaks": "⏳ SCANNING",
             "🧠 AI Analysis": "❌ WAITING",
         }
 
-        # задачи
+        # ✅ правильные задачи
         task_db = asyncio.create_task(search_username(username))
         task_social = asyncio.create_task(search_username_socials(username))
         task_tg = asyncio.create_task(get_telegram_info(username=username))
-        task_leaks = asyncio.create_task(check_leaks(username))
 
-        tasks = [task_db, task_social, task_tg, task_leaks]
+        tasks = [task_db, task_social, task_tg]
 
         # прогресс
         progress_task = asyncio.create_task(
             module_progress_loop(status, tasks, modules)
         )
 
-        results = await asyncio.gather(*tasks)
+        # результаты
+        db_res, social_res, tg_res = await asyncio.gather(*tasks)
+
         progress_task.cancel()
 
-        found_sites, socials, tg, leaks = results
+        # ✅ правильный unpack
+        found_sites, all_sites = db_res
+        socials = social_res
+        tg = tg_res
 
-        # AI
+        # ================= AI =================
+
         modules["🧠 AI Analysis"] = "⏳ RUNNING"
         await status.edit_text(render_status(90, modules))
 
         try:
             analysis = await analyze_username_ai(username, found_sites)
             modules["🧠 AI Analysis"] = "✅ DONE"
-        except:
-            analysis = "❌ AI недоступен"
+        except Exception as e:
+            print("AI ERROR:", e)
+            analysis = f"❌ AI ошибка: {e}"
             modules["🧠 AI Analysis"] = "❌ ERROR"
 
         await status.edit_text(render_status(100, modules))
         await asyncio.sleep(0.5)
 
+        # ================= RESULT =================
+
         elapsed = time.time() - start
 
-        response = f"👤 {username}\n\n"
-        response += f"🧠 {analysis}\n"
-        response += f"\n⏱ {elapsed:.1f} сек."
+        response = f"👤 Username: {username}\n\n"
+
+        # сайты
+        response += "🌐 Найдено:\n"
+        if found_sites:
+            for s in found_sites[:10]:
+                response += f"• {s['site']}: {s['url']}\n"
+        else:
+            response += "❌ Не найдено\n"
+
+        # соцсети
+        response += "\n📡 Соцсети:\n"
+        if socials:
+            for s in socials:
+                response += f"• {s['site']}: {s['url']}\n"
+        else:
+            response += "❌ Не найдено\n"
+
+        # telegram
+        response += "\n📲 Telegram:\n"
+        if tg and tg.get("found"):
+            response += f"🆔 ID: {tg['id']}\n"
+        else:
+            response += "❌ Не найдено\n"
+
+        # AI
+        response += "\n🧠 AI Анализ:\n" + analysis
+
+        response += f"\n\n⏱ {elapsed:.1f} сек."
 
         await status.edit_text(
             response,
@@ -162,4 +208,4 @@ async def _handle_username(message, username: str):
         )
 
     except Exception as e:
-        await status.edit_text(f"❌ {e}")
+        await status.edit_text(f"❌ Ошибка: {e}")
