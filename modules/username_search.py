@@ -2,7 +2,6 @@ import asyncio
 import aiohttp
 import shutil
 
-
 SITES = {
     "GitHub": "https://github.com/{}",
     "Twitter/X": "https://x.com/{}",
@@ -15,28 +14,16 @@ SITES = {
 }
 
 
-# ─────────────────────────────────────────────
-
 async def search_username(username: str):
 
-    # 🔥 1. сначала Sherlock
     if _sherlock_available():
         found = await _sherlock_search(username)
 
-        print("SHERLOCK FOUND:", len(found))
-
         if found:
             return found, None
-        else:
-            print("Sherlock пустой → fallback")
 
-    # 🔥 2. fallback
     return await _fallback_search(username)
 
-
-# ─────────────────────────────────────────────
-# SHERLOCK
-# ─────────────────────────────────────────────
 
 async def _sherlock_search(username: str):
     try:
@@ -54,9 +41,6 @@ async def _sherlock_search(username: str):
         results = []
 
         for line in output.splitlines():
-            line = line.strip()
-
-            # 🔥 строго только найденные строки
             if line.startswith("[+]"):
                 try:
                     content = line[3:].strip()
@@ -72,14 +56,9 @@ async def _sherlock_search(username: str):
 
         return results
 
-    except Exception as e:
-        print("Sherlock error:", e)
+    except:
         return []
 
-
-# ─────────────────────────────────────────────
-# FALLBACK
-# ─────────────────────────────────────────────
 
 async def _fallback_search(username: str):
     all_sites = []
@@ -114,10 +93,10 @@ async def _check_site(session, site_name, url, username):
             exists = False
 
             if resp.status == 200:
-                # если редирект — скорее всего нет профиля
                 if final_url.rstrip("/") == url.rstrip("/"):
                     if username.lower() in text.lower():
-                        exists = True
+                        if "not found" not in text.lower():
+                            exists = True
 
             return {
                 "site": site_name,
@@ -125,15 +104,13 @@ async def _check_site(session, site_name, url, username):
                 "exists": exists
             }
 
-    except Exception:
+    except:
         return {
             "site": site_name,
             "url": url,
             "exists": False
         }
 
-
-# ─────────────────────────────────────────────
 
 def _sherlock_available():
     return shutil.which("sherlock") is not None

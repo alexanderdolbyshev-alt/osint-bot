@@ -1,31 +1,48 @@
-from telethon import TelegramClient
 import os
+from telethon import TelegramClient
+from telethon.tl.functions.contacts import ImportContactsRequest
+from telethon.tl.types import InputPhoneContact
 
-api_id = int(os.getenv("TG_API_ID"))
+api_id = os.getenv("TG_API_ID")
 api_hash = os.getenv("TG_API_HASH")
 
-client = TelegramClient("osint_session", api_id, api_hash)
+if api_id:
+    api_id = int(api_id)
 
 
-async def get_telegram_info(phone: str):
+async def get_telegram_info(phone: str) -> dict:
+    if not api_id or not api_hash:
+        return {"found": False}
+
     try:
-        await client.connect()
+        async with TelegramClient("session", api_id, api_hash) as client:
 
-        if not await client.is_user_authorized():
-            return {"found": False, "error": "не авторизован"}
+            contact = InputPhoneContact(
+                client_id=0,
+                phone=phone,
+                first_name="Temp",
+                last_name="User"
+            )
 
-        entity = await client.get_entity(phone)
+            result = await client(ImportContactsRequest([contact]))
 
-        return {
-            "found": True,
-            "username": entity.username,
-            "name": f"{entity.first_name or ''} {entity.last_name or ''}".strip(),
-            "id": entity.id,
-            "bot": entity.bot,
-        }
+            if not result.users:
+                return {"found": False}
+
+            user = result.users[0]
+
+            # 🔥 получаем bio
+            full = await client.get_entity(user.id)
+
+            return {
+                "found": True,
+                "id": user.id,
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "phone": user.phone,
+                "bot": user.bot,
+            }
 
     except Exception as e:
-        return {
-            "found": False,
-            "error": str(e)
-        }
+        return {"found": False, "error": str(e)}
