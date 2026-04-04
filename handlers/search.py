@@ -107,7 +107,7 @@ async def _handle_username(message, username: str):
     start = time.time()
 
     try:
-        found_sites, all_sites = await search_username(username)
+        found_sites, _ = await search_username(username)
         socials = await search_username_socials(username)
         tg = await get_telegram_info(username=username)
 
@@ -119,12 +119,18 @@ async def _handle_username(message, username: str):
         response = f"👤 Username: {username}\n\n"
 
         response += "🌐 Найдено:\n"
-        for s in found_sites[:10]:
-            response += f"• {s['site']}: {s['url']}\n"
+        if found_sites:
+            for s in found_sites[:10]:
+                response += f"• {s['site']}: {s['url']}\n"
+        else:
+            response += "❌ Не найдено\n"
 
         response += "\n📡 Соцсети:\n"
-        for s in socials:
-            response += f"• {s['site']}: {s['url']}\n"
+        if socials:
+            for s in socials:
+                response += f"• {s['site']}: {s['url']}\n"
+        else:
+            response += "❌ Не найдено\n"
 
         response += "\n📲 Telegram:\n"
         response += "✅ Найден\n" if tg and tg.get("found") else "❌ Не найден\n"
@@ -150,26 +156,36 @@ async def _handle_email(message: Message, email: str):
         leaks = await check_leaks(email)
         tg = await get_telegram_info(email)
 
-        score, level = calculate_risk(leaks, [], tg)
+        # 🔥 фильтрация
+        found = [r["service"] for r in results if r.get("exists")]
+        total_found = len(found)
+
+        score, level = calculate_risk(leaks, found, tg)
 
         response = f"📧 Email: {email}\n\n"
-
         response += f"⚠️ Risk Score: {score}/100 ({level})\n\n"
 
-        response += "💣 Утечки:\n"
+        # 🌐 сервисы
+        response += f"🌐 Найдено аккаунтов: {total_found}\n"
+        if found:
+            for s in found[:15]:
+                response += f"• {s}\n"
+        else:
+            response += "❌ Не найдено\n"
+
+        # 💣 утечки
+        response += "\n💣 Утечки:\n"
         if leaks.get("found"):
             for l in leaks.get("sources", []):
                 response += f"• {l}\n"
         else:
             response += "✅ Не найдено\n"
 
+        # telegram
         response += "\n📲 Telegram:\n"
         response += "✅ Найден\n" if tg and tg.get("found") else "❌ Не найден\n"
 
-        response += "\n🧠 Результаты:\n"
-        response += str(results)
-
-        response += f"\n\n⏱ {time.time()-start:.1f} сек."
+        response += f"\n⏱ {time.time()-start:.1f} сек."
 
         await status.edit_text(response, reply_markup=main_menu_keyboard())
 
@@ -202,15 +218,17 @@ async def _handle_phone(message: Message, phone: str):
         score, level = calculate_risk(leaks, sources, tg)
 
         response = f"📱 Номер: {phone}\n\n"
-
         response += f"⚠️ Risk Score: {score}/100 ({level})\n\n"
 
         response += "📊 Инфо:\n"
         response += f"🌍 {info['country']}\n📡 {info['operator']}\n"
 
         response += "\n🌐 Источники:\n"
-        for s in sources:
-            response += f"• {s['site']} ({s['hint']})\n"
+        if sources:
+            for s in sources[:10]:
+                response += f"• {s['site']} ({s['hint']})\n"
+        else:
+            response += "❌ Не найдено\n"
 
         response += "\n💣 Утечки:\n"
         if leaks.get("found"):
