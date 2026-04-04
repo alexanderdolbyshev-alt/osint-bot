@@ -31,7 +31,45 @@ EMAIL_RE = re.compile(r"^[^@]+@[^@]+\.[^@]+$")
 PHONE_RE = re.compile(r"^\+?[0-9]{7,15}$")
 
 
-# ================= RISK SCORE =================
+# ================= UI =================
+
+def build_bar(p):
+    total = 12
+    filled = int(p / 100 * total)
+    return "█" * filled + "░" * (total - filled)
+
+
+# ================= HYBRID PROGRESS =================
+
+async def hybrid_progress(msg, tasks, label="🔍 Анализ..."):
+    fake = 0
+
+    while True:
+        done = sum(t.done() for t in tasks)
+        total = len(tasks)
+
+        real = int((done / total) * 80)  # реальные %
+
+        # гибрид: немного "догоняем" анимацией
+        if fake < real:
+            fake = real
+        else:
+            fake += 1
+
+        fake = min(fake, 95)
+
+        try:
+            await msg.edit_text(f"{label}\n\n[{build_bar(fake)}] {fake}%")
+        except:
+            pass
+
+        if done == total:
+            break
+
+        await asyncio.sleep(0.3)
+
+
+# ================= RISK =================
 
 def calculate_risk(leaks, sources, tg):
     score = 0
@@ -102,19 +140,31 @@ async def handle_search(message: Message):
 # ================= USERNAME =================
 
 async def _handle_username(message, username: str):
-    status = await message.answer("🔍 Поиск...")
+    status = await message.answer("🚀 Старт...")
 
     start = time.time()
 
     try:
-        found_sites, _ = await search_username(username)
-        socials = await search_username_socials(username)
-        tg = await get_telegram_info(username=username)
+        t1 = asyncio.create_task(search_username(username))
+        t2 = asyncio.create_task(search_username_socials(username))
+        t3 = asyncio.create_task(get_telegram_info(username=username))
+
+        tasks = [t1, t2, t3]
+
+        progress = asyncio.create_task(hybrid_progress(status, tasks, "👤 Поиск username..."))
+
+        db_res, socials, tg = await asyncio.gather(*tasks)
+        progress.cancel()
+
+        found_sites, _ = db_res
 
         try:
             ai = await analyze_username_ai(username, found_sites)
         except:
             ai = "❌ AI недоступен"
+
+        await status.edit_text(f"⚡ Завершение...\n\n[{build_bar(100)}] 100%")
+        await asyncio.sleep(0.3)
 
         response = f"👤 Username: {username}\n\n"
 
@@ -129,8 +179,6 @@ async def _handle_username(message, username: str):
         if socials:
             for s in socials:
                 response += f"• {s['site']}: {s['url']}\n"
-        else:
-            response += "❌ Не найдено\n"
 
         response += "\n📲 Telegram:\n"
         response += "✅ Найден\n" if tg and tg.get("found") else "❌ Не найден\n"
@@ -147,33 +195,38 @@ async def _handle_username(message, username: str):
 # ================= EMAIL =================
 
 async def _handle_email(message: Message, email: str):
-    status = await message.answer("📧 Анализ email...")
+    status = await message.answer("📧 Старт...")
 
     start = time.time()
 
     try:
-        results = await search_email(email)
-        leaks = await check_leaks(email)
-        tg = await get_telegram_info(email)
+        t1 = asyncio.create_task(search_email(email))
+        t2 = asyncio.create_task(check_leaks(email))
+        t3 = asyncio.create_task(get_telegram_info(email))
 
-        # 🔥 фильтрация
+        tasks = [t1, t2, t3]
+
+        progress = asyncio.create_task(hybrid_progress(status, tasks, "📧 Анализ email..."))
+
+        results, leaks, tg = await asyncio.gather(*tasks)
+        progress.cancel()
+
         found = [r["service"] for r in results if r.get("exists")]
-        total_found = len(found)
-
         score, level = calculate_risk(leaks, found, tg)
+
+        await status.edit_text(f"⚡ Завершение...\n\n[{build_bar(100)}] 100%")
+        await asyncio.sleep(0.3)
 
         response = f"📧 Email: {email}\n\n"
         response += f"⚠️ Risk Score: {score}/100 ({level})\n\n"
 
-        # 🌐 сервисы
-        response += f"🌐 Найдено аккаунтов: {total_found}\n"
+        response += f"🌐 Найдено аккаунтов: {len(found)}\n"
         if found:
             for s in found[:15]:
                 response += f"• {s}\n"
         else:
             response += "❌ Не найдено\n"
 
-        # 💣 утечки
         response += "\n💣 Утечки:\n"
         if leaks.get("found"):
             for l in leaks.get("sources", []):
@@ -181,11 +234,10 @@ async def _handle_email(message: Message, email: str):
         else:
             response += "✅ Не найдено\n"
 
-        # telegram
         response += "\n📲 Telegram:\n"
         response += "✅ Найден\n" if tg and tg.get("found") else "❌ Не найден\n"
 
-        response += f"\n⏱ {time.time()-start:.1f} сек."
+        response += f"\n\n⏱ {time.time()-start:.1f} сек."
 
         await status.edit_text(response, reply_markup=main_menu_keyboard())
 
@@ -196,17 +248,22 @@ async def _handle_email(message: Message, email: str):
 # ================= PHONE =================
 
 async def _handle_phone(message: Message, phone: str):
-    status = await message.answer("📱 Анализ телефона...")
+    status = await message.answer("📱 Старт...")
 
     start = time.time()
 
     try:
-        results, sources, leaks, tg = await asyncio.gather(
-            search_phone(phone),
-            search_phone_sources(phone),
-            check_leaks(phone),
-            get_telegram_info(phone)
-        )
+        t1 = asyncio.create_task(search_phone(phone))
+        t2 = asyncio.create_task(search_phone_sources(phone))
+        t3 = asyncio.create_task(check_leaks(phone))
+        t4 = asyncio.create_task(get_telegram_info(phone))
+
+        tasks = [t1, t2, t3, t4]
+
+        progress = asyncio.create_task(hybrid_progress(status, tasks, "📱 Анализ номера..."))
+
+        results, sources, leaks, tg = await asyncio.gather(*tasks)
+        progress.cancel()
 
         info = basic_phone_info(phone)
 
@@ -216,6 +273,9 @@ async def _handle_phone(message: Message, phone: str):
             ai = "❌ AI недоступен"
 
         score, level = calculate_risk(leaks, sources, tg)
+
+        await status.edit_text(f"⚡ Завершение...\n\n[{build_bar(100)}] 100%")
+        await asyncio.sleep(0.3)
 
         response = f"📱 Номер: {phone}\n\n"
         response += f"⚠️ Risk Score: {score}/100 ({level})\n\n"
@@ -227,8 +287,6 @@ async def _handle_phone(message: Message, phone: str):
         if sources:
             for s in sources[:10]:
                 response += f"• {s['site']} ({s['hint']})\n"
-        else:
-            response += "❌ Не найдено\n"
 
         response += "\n💣 Утечки:\n"
         if leaks.get("found"):
@@ -240,7 +298,7 @@ async def _handle_phone(message: Message, phone: str):
         response += "\n📲 Telegram:\n"
         response += "✅ Найден\n" if tg and tg.get("found") else "❌ Не найден\n"
 
-        response += "\n🧠 AI Анализ:\n" + ai
+        response += "\n🧠 AI:\n" + ai
 
         response += f"\n\n⏱ {time.time()-start:.1f} сек."
 
