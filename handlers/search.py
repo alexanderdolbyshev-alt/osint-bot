@@ -38,19 +38,20 @@ PHONE_RE = re.compile(r"^\+?[0-9]{7,15}$")
 USERNAME_RE = re.compile(r"^@?[a-zA-Z0-9_.-]{2,30}$")
 
 
-# ================= PROGRESS BAR =================
+# ================= 💻 HACKER TERMINAL =================
 
-async def progress_bar(msg, percent, text=""):
-    total_blocks = 10
-    filled = int(percent / 100 * total_blocks)
-    empty = total_blocks - filled
+async def hacker_terminal(msg, lines, delay=0.35):
+    output = ""
 
-    bar = "█" * filled + "░" * empty
+    for line in lines:
+        output += f"{line}\n"
 
-    try:
-        await msg.edit_text(f"{text}\n\n[{bar}] {percent}%")
-    except:
-        pass
+        try:
+            await msg.edit_text(f"```bash\n{output}\n```")
+        except:
+            pass
+
+        await asyncio.sleep(delay)
 
 
 # ================= MAIN =================
@@ -107,44 +108,55 @@ async def handle_search(message: Message):
 
 async def _handle_username(message, username: str):
 
-    status = await message.answer("🚀 Запуск...")
+    status = await message.answer("💻 Initializing...")
 
     start = time.time()
 
     try:
-        await progress_bar(status, 5, "🚀 Запуск OSINT...")
-        await asyncio.sleep(0.3)
+        # 🔥 Терминал — запуск
+        await hacker_terminal(status, [
+            "> initializing OSINT engine...",
+            "> loading modules █░░░░░░░░",
+            "> loading modules ███░░░░░░",
+            "> loading modules ███████░░",
+            "> modules loaded ✓",
+            "> preparing scan...",
+        ])
 
-        # запускаем параллельно
+        # 🚀 запускаем задачи
         search_task = asyncio.create_task(search_username(username))
         social_task = asyncio.create_task(search_username_socials(username))
         tg_task = asyncio.create_task(get_telegram_info(username=username))
 
-        await progress_bar(status, 25, "🌐 Поиск по базам...")
-        await asyncio.sleep(0.3)
-
-        await progress_bar(status, 45, "📡 Скан соцсетей...")
-        await asyncio.sleep(0.3)
-
-        await progress_bar(status, 65, "📲 Telegram OSINT...")
-        await asyncio.sleep(0.3)
-
-        await progress_bar(status, 75, "⏳ Сбор данных...")
+        # 🔥 Терминал — процесс
+        await hacker_terminal(status, [
+            "> scanning username...",
+            "> connecting to databases...",
+            "> scanning social networks...",
+            "> checking telegram...",
+            "> collecting data...",
+        ])
 
         found_sites, all_sites = await search_task
         socials = await social_task
         tg = await tg_task
 
-        await progress_bar(status, 85, "🧠 AI анализ...")
-        await asyncio.sleep(0.3)
+        # 🧠 AI блок
+        await hacker_terminal(status, [
+            "> analyzing patterns...",
+            "> running AI model...",
+        ])
 
         try:
             analysis = await analyze_username_ai(username, found_sites)
         except:
             analysis = "❌ AI недоступен"
 
-        await progress_bar(status, 100, "✅ Завершено")
-        await asyncio.sleep(0.4)
+        # ✅ финал
+        await hacker_terminal(status, [
+            "> finalizing report...",
+            "> DONE ✓",
+        ])
 
         elapsed = time.time() - start
 
@@ -186,21 +198,18 @@ async def _handle_username(message, username: str):
 
 async def _handle_email(message: Message, email: str):
 
-    status = await message.answer("📧 Проверка email...")
-    await asyncio.sleep(0.3)
+    status = await message.answer("💻 Starting email scan...")
+
+    await hacker_terminal(status, [
+        "> validating email...",
+        "> checking databases...",
+        "> scanning leaks...",
+        "> DONE ✓",
+    ])
 
     try:
         results = await search_email(email)
-
-        await status.edit_text("⏳ Обработка...")
-        await asyncio.sleep(0.3)
-
-        await status.edit_text("✅ Готово")
-
-        await asyncio.sleep(0.3)
-
         await status.edit_text(str(results))
-
     except Exception as e:
         await status.edit_text(f"❌ {e}")
 
@@ -209,14 +218,16 @@ async def _handle_email(message: Message, email: str):
 
 async def _handle_phone(message: Message, phone: str):
 
-    status = await message.answer("📱 Анализ...")
+    status = await message.answer("💻 Starting phone scan...")
 
-    await asyncio.sleep(0.3)
+    await hacker_terminal(status, [
+        "> validating number...",
+        "> scanning operators...",
+        "> checking leaks...",
+        "> searching telegram...",
+    ])
 
     try:
-        await progress_bar(status, 20, "📡 Поиск данных...")
-        await asyncio.sleep(0.3)
-
         results, sources, leaks, tg = await asyncio.gather(
             search_phone(phone),
             search_phone_sources(phone),
@@ -224,14 +235,12 @@ async def _handle_phone(message: Message, phone: str):
             get_telegram_info(phone)
         )
 
-        await progress_bar(status, 70, "🧠 AI анализ...")
-        await asyncio.sleep(0.3)
+        await hacker_terminal(status, [
+            "> running AI analysis...",
+            "> DONE ✓",
+        ])
 
         ai = await analyze_phone_ai(phone, {}, leaks, sources)
-
-        await progress_bar(status, 100, "✅ Готово")
-
-        await asyncio.sleep(0.3)
 
         await status.edit_text(f"📱 {phone}\n\n{ai}")
 
