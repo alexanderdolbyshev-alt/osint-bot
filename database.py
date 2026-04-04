@@ -58,7 +58,7 @@ class Database:
         if self.db:
             await self.db.close()
 
-    # ─── Пользователи ────────────────────────────────
+    # ─── USERS ─────────────────────────────
 
     async def ensure_user(self, user_id: int, username: str = None,
                           first_name: str = None):
@@ -78,6 +78,41 @@ class Database:
                 return None
             cols = [d[0] for d in cursor.description]
             return dict(zip(cols, row))
+
+    # ─── 💰 ВАЖНО: ДОБАВЛЕНО ─────────────────
+
+    async def add_paid_searches(
+        self,
+        user_id: int,
+        count: int,
+        package_id: str,
+        stars: int,
+        charge_id: str
+    ):
+        # добавляем запросы
+        await self.db.execute("""
+            UPDATE users
+            SET paid_searches_remaining = paid_searches_remaining + ?
+            WHERE user_id = ?
+        """, (count, user_id))
+
+        # логируем платеж
+        await self.db.execute("""
+            INSERT INTO payments
+            (user_id, package_id, stars_amount, searches_added, timestamp, telegram_charge_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            user_id,
+            package_id,
+            stars,
+            count,
+            time.time(),
+            charge_id
+        ))
+
+        await self.db.commit()
+
+    # ─── PREMIUM ─────────────────────────────
 
     async def is_premium(self, user_id: int) -> bool:
         user = await self.get_user(user_id)
@@ -105,38 +140,21 @@ class Database:
         """, (until, user_id))
         await self.db.commit()
 
-    # ─── Подсчёт запросов ─────────────────────────────
-
-    async def get_total_searches(self, user_id: int) -> int:
-        user = await self.get_user(user_id)
-        return user["total_searches"] if user else 0
-
-    async def get_paid_remaining(self, user_id: int) -> int:
-        user = await self.get_user(user_id)
-        return user["paid_searches_remaining"] if user else 0
+    # ─── LIMITS ─────────────────────────────
 
     async def can_search(self, user_id: int, free_limit: int) -> dict:
-        """
-        Проверяет может ли юзер делать поиск.
-        """
 
-        # 🔥 АДМИН БЕЗ ЛИМИТОВ
         if user_id in ADMIN_IDS:
-            return {
-                "allowed": True,
-                "remaining": 9999,
-                "type": "admin"
-            }
+            return {"allowed": True, "remaining": 9999, "type": "admin"}
 
         user = await self.get_user(user_id)
+
         if not user:
             return {"allowed": True, "remaining": free_limit, "type": "free"}
 
-        # Premium
         if await self.is_premium(user_id):
             return {"allowed": True, "remaining": 999, "type": "premium"}
 
-        # Платные запросы
         if user["paid_searches_remaining"] > 0:
             return {
                 "allowed": True,
@@ -144,24 +162,15 @@ class Database:
                 "type": "paid"
             }
 
-        # Бесплатные
         used = user["total_searches"]
         remaining = free_limit - used
 
         if remaining > 0:
-            return {
-                "allowed": True,
-                "remaining": remaining,
-                "type": "free"
-            }
+            return {"allowed": True, "remaining": remaining, "type": "free"}
 
-        return {
-            "allowed": False,
-            "remaining": 0,
-            "type": "exhausted"
-        }
+        return {"allowed": False, "remaining": 0, "type": "exhausted"}
 
-    # ─── Логирование ──────────────────────────────────
+    # ─── LOG ─────────────────────────────
 
     async def log_search(self, user_id: int, query_type: str,
                          query: str, results_count: int = 0):
@@ -172,7 +181,6 @@ class Database:
             VALUES (?, ?, ?, ?, ?)
         """, (user_id, query_type, query, time.time(), results_count))
 
-        # ❗ НЕ увеличиваем для админа
         if user_id not in ADMIN_IDS:
             await self.db.execute("""
                 UPDATE users SET total_searches = total_searches + 1

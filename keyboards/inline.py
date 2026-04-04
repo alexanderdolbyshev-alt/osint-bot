@@ -42,10 +42,16 @@ def main_menu_keyboard() -> InlineKeyboardMarkup:
 
 
 def buy_keyboard() -> InlineKeyboardMarkup:
-    """Меню покупки запросов"""
     buttons = []
 
-    for pack_id, pack in PAYMENT_PACKAGES.items():
+    order = ["pack_test", "pack_10", "pack_50", "pack_100", "pack_unlimited"]
+
+    for pack_id in order:
+        if pack_id not in PAYMENT_PACKAGES:
+            continue
+
+        pack = PAYMENT_PACKAGES[pack_id]
+
         buttons.append([
             InlineKeyboardButton(
                 text=f"⭐ {pack['label']} — {pack['stars']} Stars",
