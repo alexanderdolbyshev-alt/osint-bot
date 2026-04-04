@@ -20,10 +20,18 @@ from modules.username_osint import search_username_socials
 from modules.ai_openrouter import analyze_username_ai
 from modules.telegram_osint import get_telegram_info
 
+# 🔥 ДОБАВИЛ
+from modules.email_search import search_email
+from modules.phone_search import search_phone, search_phone_sources
+from modules.leak_check import check_leaks
+
 router = Router()
 
 ADMIN_IDS = list(map(int, os.getenv("ADMIN_IDS", "0").split(",")))
+
 USERNAME_RE = re.compile(r"^@?[a-zA-Z0-9_.-]{2,30}$")
+EMAIL_RE = re.compile(r"^[^@]+@[^@]+\.[^@]+$")
+PHONE_RE = re.compile(r"^\+?[0-9]{7,15}$")
 
 
 # ================= UI =================
@@ -79,6 +87,7 @@ async def handle_search(message: Message):
     if not text or text.startswith("/"):
         return
 
+    text = text.strip()
     user_id = message.from_user.id
 
     await db.ensure_user(
@@ -102,9 +111,16 @@ async def handle_search(message: Message):
             )
             return
 
-    text = text.strip()
+    clean = re.sub(r"[\s\-\(\)]", "", text)
 
-    if text.startswith("@"):
+    # 🔥 ВАЖНО: порядок проверок
+    if EMAIL_RE.match(text):
+        await _handle_email(message, text)
+
+    elif PHONE_RE.match(clean):
+        await _handle_phone(message, clean)
+
+    elif text.startswith("@"):
         await _handle_username(message, text.lstrip("@"))
 
     elif USERNAME_RE.match(text):
@@ -130,29 +146,22 @@ async def _handle_username(message, username: str):
             "🧠 AI Analysis": "❌ WAITING",
         }
 
-        # ✅ правильные задачи
         task_db = asyncio.create_task(search_username(username))
         task_social = asyncio.create_task(search_username_socials(username))
         task_tg = asyncio.create_task(get_telegram_info(username=username))
 
         tasks = [task_db, task_social, task_tg]
 
-        # прогресс
         progress_task = asyncio.create_task(
             module_progress_loop(status, tasks, modules)
         )
 
-        # результаты
         db_res, social_res, tg_res = await asyncio.gather(*tasks)
-
         progress_task.cancel()
 
-        # ✅ правильный unpack
         found_sites, all_sites = db_res
         socials = social_res
         tg = tg_res
-
-        # ================= AI =================
 
         modules["🧠 AI Analysis"] = "⏳ RUNNING"
         await status.edit_text(render_status(90, modules))
@@ -168,13 +177,10 @@ async def _handle_username(message, username: str):
         await status.edit_text(render_status(100, modules))
         await asyncio.sleep(0.5)
 
-        # ================= RESULT =================
-
         elapsed = time.time() - start
 
         response = f"👤 Username: {username}\n\n"
 
-        # сайты
         response += "🌐 Найдено:\n"
         if found_sites:
             for s in found_sites[:10]:
@@ -182,7 +188,6 @@ async def _handle_username(message, username: str):
         else:
             response += "❌ Не найдено\n"
 
-        # соцсети
         response += "\n📡 Соцсети:\n"
         if socials:
             for s in socials:
@@ -190,22 +195,46 @@ async def _handle_username(message, username: str):
         else:
             response += "❌ Не найдено\n"
 
-        # telegram
         response += "\n📲 Telegram:\n"
         if tg and tg.get("found"):
             response += f"🆔 ID: {tg['id']}\n"
         else:
             response += "❌ Не найдено\n"
 
-        # AI
         response += "\n🧠 AI Анализ:\n" + analysis
-
         response += f"\n\n⏱ {elapsed:.1f} сек."
 
-        await status.edit_text(
-            response,
-            reply_markup=main_menu_keyboard()
-        )
+        await status.edit_text(response, reply_markup=main_menu_keyboard())
 
     except Exception as e:
         await status.edit_text(f"❌ Ошибка: {e}")
+
+
+# ================= EMAIL =================
+
+async def _handle_email(message: Message, email: str):
+    status = await message.answer("📧 Проверка email...")
+
+    try:
+        result = await search_email(email)
+        await status.edit_text(f"📧 {email}\n\n{result}")
+    except Exception as e:
+        await status.edit_text(f"❌ {e}")
+
+
+# ================= PHONE =================
+
+async def _handle_phone(message: Message, phone: str):
+    status = await message.answer("📱 Анализ номера...")
+
+    try:
+        results, sources, leaks, tg = await asyncio.gather(
+            search_phone(phone),
+            search_phone_sources(phone),
+            check_leaks(phone),
+            get_telegram_info(phone)
+        )
+
+        await status.edit_text(f"📱 {phone}\n\n✅ Анализ завершён")
+    except Exception as e:
+        await status.edit_text(f"❌ {e}")
