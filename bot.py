@@ -3,6 +3,7 @@ import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
+from aiogram.client.default import DefaultBotProperties
 
 from config import BOT_TOKEN
 from database import db
@@ -45,12 +46,14 @@ async def main():
 
     bot = Bot(
         token=BOT_TOKEN,
-        parse_mode=ParseMode.HTML  # красиво форматирует текст
+        default=DefaultBotProperties(
+            parse_mode=ParseMode.HTML
+        )
     )
 
     dp = Dispatcher()
 
-    # 🔥 порядок важен
+    # порядок важен
     dp.include_router(commands.router)
     dp.include_router(payment.router)
     dp.include_router(search.router)
@@ -60,7 +63,6 @@ async def main():
 
     logger.info("🚀 Starting bot...")
 
-    # 🔥 убиваем webhook (очень важно для Railway)
     await bot.delete_webhook(drop_pending_updates=True)
 
     try:
