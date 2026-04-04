@@ -1,5 +1,4 @@
 from telethon import TelegramClient
-from telethon.errors import SessionPasswordNeededError
 import os
 
 api_id = int(os.getenv("TG_API_ID"))
@@ -13,16 +12,20 @@ async def get_telegram_info(phone: str):
         await client.connect()
 
         if not await client.is_user_authorized():
-            return {"error": "Не авторизован в Telegram API"}
+            return {"found": False, "error": "не авторизован"}
 
-        result = await client.get_entity(phone)
+        entity = await client.get_entity(phone)
 
         return {
             "found": True,
-            "username": result.username,
-            "name": f"{result.first_name or ''} {result.last_name or ''}".strip(),
-            "id": result.id
+            "username": entity.username,
+            "name": f"{entity.first_name or ''} {entity.last_name or ''}".strip(),
+            "id": entity.id,
+            "bot": entity.bot,
         }
 
     except Exception as e:
-        return {"found": False, "error": str(e)}
+        return {
+            "found": False,
+            "error": str(e)
+        }

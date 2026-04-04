@@ -35,6 +35,7 @@ from modules.leak_check import check_leaks
 from modules.ai_openrouter import analyze_username_ai
 from modules.ai_phone import analyze_phone_ai
 from utils.cache import get_cache, set_cache
+from modules.telegram_osint import get_telegram_info
 
 router = Router()
 
@@ -199,11 +200,12 @@ async def _handle_phone(message: Message, phone: str):
             )
             return
 
-        # ⚡ ПАРАЛЛЕЛЬНЫЙ ЗАПУСК (x2 быстрее)
-        results, sources, leaks = await asyncio.gather(
+        # ⚡ ПАРАЛЛЕЛЬНО ВСЁ
+        results, sources, leaks, tg = await asyncio.gather(
             search_phone(phone),
             search_phone_sources(phone),
-            check_leaks(phone)
+            check_leaks(phone),
+            get_telegram_info(phone)  # 🔥 ВОТ НОВОЕ
         )
 
         info = basic_phone_info(phone)
@@ -216,7 +218,7 @@ async def _handle_phone(message: Message, phone: str):
 
         elapsed = time.time() - start
 
-        # 🎯 КРАСИВЫЙ UI
+        # 🎯 UI
         response = f"""
 📱 **АНАЛИЗ НОМЕРА**
 ━━━━━━━━━━━━━━━━━━━
@@ -246,16 +248,29 @@ async def _handle_phone(message: Message, phone: str):
         else:
             response += "✅ Не найдено\n"
 
+        # 🔥 TELEGRAM (НОВОЕ)
+        response += "\n\n📱 **Telegram**\n"
+        if tg.get("found"):
+            response += f"👤 Имя: {tg.get('name')}\n"
+
+            if tg.get("username"):
+                response += f"🔗 Username: @{tg.get('username')}\n"
+
+            if tg.get("bot"):
+                response += "🤖 Это бот\n"
+        else:
+            response += "❌ Не найдено\n"
+
         # 🧠 AI
         response += "\n🧠 **AI профиль**\n"
         response += ai
 
-        # ⏱ время
+        # ⏱
         response += f"\n\n⏱ {elapsed:.1f} сек."
         response += "\n━━━━━━━━━━━━━━━━━━━"
         response += "\n⚡ Powered by OSINT Engine"
 
-        # 💾 сохраняем в кеш
+        # 💾 кеш
         set_cache(cache_key, response)
 
         await _safe_send(
