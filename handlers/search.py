@@ -2,6 +2,7 @@ import re
 import asyncio
 import time
 import os
+import random
 
 from aiogram import Router
 from aiogram.types import Message
@@ -38,20 +39,63 @@ PHONE_RE = re.compile(r"^\+?[0-9]{7,15}$")
 USERNAME_RE = re.compile(r"^@?[a-zA-Z0-9_.-]{2,30}$")
 
 
-# ================= 💻 HACKER TERMINAL =================
+# ================= 💻 TERMINAL CORE =================
 
-async def hacker_terminal(msg, lines, delay=0.35):
+async def terminal_stream(msg, lines, min_delay=0.2, max_delay=0.5):
     output = ""
 
     for line in lines:
         output += f"{line}\n"
 
         try:
-            await msg.edit_text(f"```bash\n{output}\n```")
+            await msg.edit_text(f"```bash\n{output}_\n```")
         except:
             pass
 
-        await asyncio.sleep(delay)
+        await asyncio.sleep(random.uniform(min_delay, max_delay))
+
+    # убрать курсор
+    try:
+        await msg.edit_text(f"```bash\n{output}\n```")
+    except:
+        pass
+
+
+# ================= 📊 PROGRESS BAR =================
+
+def build_bar(percent):
+    total = 12
+    filled = int(percent / 100 * total)
+    return "█" * filled + "░" * (total - filled)
+
+
+async def progress_update(msg, percent, text):
+    bar = build_bar(percent)
+    try:
+        await msg.edit_text(
+            f"{text}\n\n[{bar}] {percent}%"
+        )
+    except:
+        pass
+
+
+# ================= 🧠 FAKE AI THINKING =================
+
+async def ai_thinking(msg):
+    thoughts = [
+        "🧠 analyzing behavioral patterns...",
+        "🧠 correlating social graphs...",
+        "🧠 estimating probability model...",
+        "🧠 extracting hidden signals...",
+    ]
+
+    for t in thoughts:
+        try:
+            await msg.edit_text(f"{t}\n\n⏳ thinking...")
+        except:
+            pass
+
+        await asyncio.sleep(random.uniform(0.6, 1.2))
 
 
 # ================= MAIN =================
@@ -108,55 +152,57 @@ async def handle_search(message: Message):
 
 async def _handle_username(message, username: str):
 
-    status = await message.answer("💻 Initializing...")
+    status = await message.answer("💻 booting system...")
 
     start = time.time()
 
     try:
-        # 🔥 Терминал — запуск
-        await hacker_terminal(status, [
-            "> initializing OSINT engine...",
+        # 🔥 boot
+        await terminal_stream(status, [
+            "> initializing core...",
             "> loading modules █░░░░░░░░",
             "> loading modules ███░░░░░░",
             "> loading modules ███████░░",
             "> modules loaded ✓",
-            "> preparing scan...",
         ])
 
-        # 🚀 запускаем задачи
+        # 💀 fake error
+        await terminal_stream(status, [
+            "> connecting to remote node...",
+            "> ERROR: timeout",
+            "> retrying...",
+            "> connection established ✓",
+        ])
+
+        # 🚀 tasks
         search_task = asyncio.create_task(search_username(username))
         social_task = asyncio.create_task(search_username_socials(username))
         tg_task = asyncio.create_task(get_telegram_info(username=username))
 
-        # 🔥 Терминал — процесс
-        await hacker_terminal(status, [
-            "> scanning username...",
-            "> connecting to databases...",
-            "> scanning social networks...",
-            "> checking telegram...",
-            "> collecting data...",
-        ])
+        # 📊 progress
+        await progress_update(status, 25, "🌐 scanning databases...")
+        await asyncio.sleep(0.5)
+
+        await progress_update(status, 50, "📡 scanning social networks...")
+        await asyncio.sleep(0.5)
+
+        await progress_update(status, 70, "📲 scanning telegram...")
+        await asyncio.sleep(0.5)
 
         found_sites, all_sites = await search_task
         socials = await social_task
         tg = await tg_task
 
-        # 🧠 AI блок
-        await hacker_terminal(status, [
-            "> analyzing patterns...",
-            "> running AI model...",
-        ])
+        # 🧠 AI thinking
+        await ai_thinking(status)
 
         try:
             analysis = await analyze_username_ai(username, found_sites)
         except:
             analysis = "❌ AI недоступен"
 
-        # ✅ финал
-        await hacker_terminal(status, [
-            "> finalizing report...",
-            "> DONE ✓",
-        ])
+        await progress_update(status, 100, "✅ completed")
+        await asyncio.sleep(0.5)
 
         elapsed = time.time() - start
 
@@ -198,12 +244,12 @@ async def _handle_username(message, username: str):
 
 async def _handle_email(message: Message, email: str):
 
-    status = await message.answer("💻 Starting email scan...")
+    status = await message.answer("💻 email module...")
 
-    await hacker_terminal(status, [
-        "> validating email...",
-        "> checking databases...",
+    await terminal_stream(status, [
+        "> validating format...",
         "> scanning leaks...",
+        "> checking breach databases...",
         "> DONE ✓",
     ])
 
@@ -218,13 +264,13 @@ async def _handle_email(message: Message, email: str):
 
 async def _handle_phone(message: Message, phone: str):
 
-    status = await message.answer("💻 Starting phone scan...")
+    status = await message.answer("💻 phone module...")
 
-    await hacker_terminal(status, [
+    await terminal_stream(status, [
         "> validating number...",
         "> scanning operators...",
         "> checking leaks...",
-        "> searching telegram...",
+        "> querying telegram...",
     ])
 
     try:
@@ -235,12 +281,11 @@ async def _handle_phone(message: Message, phone: str):
             get_telegram_info(phone)
         )
 
-        await hacker_terminal(status, [
-            "> running AI analysis...",
-            "> DONE ✓",
-        ])
+        await ai_thinking(status)
 
         ai = await analyze_phone_ai(phone, {}, leaks, sources)
+
+        await progress_update(status, 100, "✅ completed")
 
         await status.edit_text(f"📱 {phone}\n\n{ai}")
 
