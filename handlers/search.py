@@ -10,20 +10,17 @@ from database import db
 from config import FREE_SEARCHES_TOTAL
 from utils.rate_limit import rate_limiter
 
-from keyboards.inline import (
-    main_menu_keyboard,
-    paywall_keyboard,
-)
+from keyboards.inline import main_menu_keyboard, paywall_keyboard
 
 from modules.username_search import search_username
 from modules.username_osint import search_username_socials
 from modules.ai_openrouter import analyze_username_ai
 from modules.telegram_osint import get_telegram_info
 
-# 🔥 ДОБАВИЛ
 from modules.email_search import search_email
-from modules.phone_search import search_phone, search_phone_sources
+from modules.phone_search import search_phone, search_phone_sources, basic_phone_info
 from modules.leak_check import check_leaks
+from modules.ai_phone import analyze_phone_ai
 
 router = Router()
 
@@ -34,49 +31,30 @@ EMAIL_RE = re.compile(r"^[^@]+@[^@]+\.[^@]+$")
 PHONE_RE = re.compile(r"^\+?[0-9]{7,15}$")
 
 
-# ================= UI =================
+# ================= RISK SCORE =================
 
-def build_bar(p):
-    total = 12
-    filled = int(p / 100 * total)
-    return "█" * filled + "░" * (total - filled)
+def calculate_risk(leaks, sources, tg):
+    score = 0
 
+    if leaks and leaks.get("found"):
+        score += 50 + len(leaks.get("sources", [])) * 5
 
-def render_status(progress, modules):
-    text = f"🌐 OSINT Scan in progress...\n\n"
-    text += f"[{build_bar(progress)}] {progress}%\n\n"
+    if sources:
+        score += min(len(sources) * 3, 20)
 
-    for name, status in modules.items():
-        text += f"{name:<20} {status}\n"
+    if tg and tg.get("found"):
+        score += 10
 
-    return text
+    score = min(score, 100)
 
+    if score < 30:
+        level = "🟢 LOW"
+    elif score < 70:
+        level = "🟡 MEDIUM"
+    else:
+        level = "🔴 HIGH"
 
-# ================= PROGRESS LOOP =================
-
-async def module_progress_loop(msg, tasks, modules):
-    while True:
-        done = sum(t.done() for t in tasks)
-        total = len(tasks)
-
-        progress = int((done / total) * 85)
-
-        if tasks[0].done():
-            modules["📡 Databases"] = "✅ DONE"
-        if tasks[1].done():
-            modules["🌍 Socials"] = "✅ DONE"
-        if tasks[2].done():
-            modules["📲 Telegram"] = "✅ DONE"
-
-        try:
-            await msg.edit_text(render_status(progress, modules))
-        except:
-            pass
-
-        if done == total:
-            break
-
-        await asyncio.sleep(0.4)
+    return score, level
 
 
 # ================= MAIN =================
@@ -90,11 +68,7 @@ async def handle_search(message: Message):
     text = text.strip()
     user_id = message.from_user.id
 
-    await db.ensure_user(
-        user_id,
-        message.from_user.username,
-        message.from_user.first_name
-    )
+    await db.ensure_user(user_id, message.from_user.username, message.from_user.first_name)
 
     if not rate_limiter.is_allowed(user_id):
         wait = rate_limiter.seconds_until_reset(user_id)
@@ -103,17 +77,12 @@ async def handle_search(message: Message):
 
     access = await db.can_search(user_id, FREE_SEARCHES_TOTAL)
 
-    if user_id not in ADMIN_IDS:
-        if not access["allowed"]:
-            await message.answer(
-                "🚫 Лимит исчерпан\n\nКупи доступ 👇",
-                reply_markup=paywall_keyboard()
-            )
-            return
+    if user_id not in ADMIN_IDS and not access["allowed"]:
+        await message.answer("🚫 Лимит исчерпан\n\nКупи доступ 👇", reply_markup=paywall_keyboard())
+        return
 
     clean = re.sub(r"[\s\-\(\)]", "", text)
 
-    # 🔥 ВАЖНО: порядок проверок
     if EMAIL_RE.match(text):
         await _handle_email(message, text)
 
@@ -133,91 +102,77 @@ async def handle_search(message: Message):
 # ================= USERNAME =================
 
 async def _handle_username(message, username: str):
-
-    status = await message.answer("🚀 Запуск OSINT...")
+    status = await message.answer("🔍 Поиск...")
 
     start = time.time()
 
     try:
-        modules = {
-            "📡 Databases": "⏳ SCANNING",
-            "🌍 Socials": "⏳ SCANNING",
-            "📲 Telegram": "⏳ SCANNING",
-            "🧠 AI Analysis": "❌ WAITING",
-        }
-
-        task_db = asyncio.create_task(search_username(username))
-        task_social = asyncio.create_task(search_username_socials(username))
-        task_tg = asyncio.create_task(get_telegram_info(username=username))
-
-        tasks = [task_db, task_social, task_tg]
-
-        progress_task = asyncio.create_task(
-            module_progress_loop(status, tasks, modules)
-        )
-
-        db_res, social_res, tg_res = await asyncio.gather(*tasks)
-        progress_task.cancel()
-
-        found_sites, all_sites = db_res
-        socials = social_res
-        tg = tg_res
-
-        modules["🧠 AI Analysis"] = "⏳ RUNNING"
-        await status.edit_text(render_status(90, modules))
+        found_sites, all_sites = await search_username(username)
+        socials = await search_username_socials(username)
+        tg = await get_telegram_info(username=username)
 
         try:
-            analysis = await analyze_username_ai(username, found_sites)
-            modules["🧠 AI Analysis"] = "✅ DONE"
-        except Exception as e:
-            print("AI ERROR:", e)
-            analysis = f"❌ AI ошибка: {e}"
-            modules["🧠 AI Analysis"] = "❌ ERROR"
-
-        await status.edit_text(render_status(100, modules))
-        await asyncio.sleep(0.5)
-
-        elapsed = time.time() - start
+            ai = await analyze_username_ai(username, found_sites)
+        except:
+            ai = "❌ AI недоступен"
 
         response = f"👤 Username: {username}\n\n"
 
         response += "🌐 Найдено:\n"
-        if found_sites:
-            for s in found_sites[:10]:
-                response += f"• {s['site']}: {s['url']}\n"
-        else:
-            response += "❌ Не найдено\n"
+        for s in found_sites[:10]:
+            response += f"• {s['site']}: {s['url']}\n"
 
         response += "\n📡 Соцсети:\n"
-        if socials:
-            for s in socials:
-                response += f"• {s['site']}: {s['url']}\n"
-        else:
-            response += "❌ Не найдено\n"
+        for s in socials:
+            response += f"• {s['site']}: {s['url']}\n"
 
         response += "\n📲 Telegram:\n"
-        if tg and tg.get("found"):
-            response += f"🆔 ID: {tg['id']}\n"
-        else:
-            response += "❌ Не найдено\n"
+        response += "✅ Найден\n" if tg and tg.get("found") else "❌ Не найден\n"
 
-        response += "\n🧠 AI Анализ:\n" + analysis
-        response += f"\n\n⏱ {elapsed:.1f} сек."
+        response += "\n🧠 AI:\n" + ai
+        response += f"\n\n⏱ {time.time()-start:.1f} сек."
 
         await status.edit_text(response, reply_markup=main_menu_keyboard())
 
     except Exception as e:
-        await status.edit_text(f"❌ Ошибка: {e}")
+        await status.edit_text(f"❌ {e}")
 
 
 # ================= EMAIL =================
 
 async def _handle_email(message: Message, email: str):
-    status = await message.answer("📧 Проверка email...")
+    status = await message.answer("📧 Анализ email...")
+
+    start = time.time()
 
     try:
-        result = await search_email(email)
-        await status.edit_text(f"📧 {email}\n\n{result}")
+        results = await search_email(email)
+        leaks = await check_leaks(email)
+        tg = await get_telegram_info(email)
+
+        score, level = calculate_risk(leaks, [], tg)
+
+        response = f"📧 Email: {email}\n\n"
+
+        response += f"⚠️ Risk Score: {score}/100 ({level})\n\n"
+
+        response += "💣 Утечки:\n"
+        if leaks.get("found"):
+            for l in leaks.get("sources", []):
+                response += f"• {l}\n"
+        else:
+            response += "✅ Не найдено\n"
+
+        response += "\n📲 Telegram:\n"
+        response += "✅ Найден\n" if tg and tg.get("found") else "❌ Не найден\n"
+
+        response += "\n🧠 Результаты:\n"
+        response += str(results)
+
+        response += f"\n\n⏱ {time.time()-start:.1f} сек."
+
+        await status.edit_text(response, reply_markup=main_menu_keyboard())
+
     except Exception as e:
         await status.edit_text(f"❌ {e}")
 
@@ -225,7 +180,9 @@ async def _handle_email(message: Message, email: str):
 # ================= PHONE =================
 
 async def _handle_phone(message: Message, phone: str):
-    status = await message.answer("📱 Анализ номера...")
+    status = await message.answer("📱 Анализ телефона...")
+
+    start = time.time()
 
     try:
         results, sources, leaks, tg = await asyncio.gather(
@@ -235,6 +192,41 @@ async def _handle_phone(message: Message, phone: str):
             get_telegram_info(phone)
         )
 
-        await status.edit_text(f"📱 {phone}\n\n✅ Анализ завершён")
+        info = basic_phone_info(phone)
+
+        try:
+            ai = await analyze_phone_ai(phone, info, leaks, sources)
+        except:
+            ai = "❌ AI недоступен"
+
+        score, level = calculate_risk(leaks, sources, tg)
+
+        response = f"📱 Номер: {phone}\n\n"
+
+        response += f"⚠️ Risk Score: {score}/100 ({level})\n\n"
+
+        response += "📊 Инфо:\n"
+        response += f"🌍 {info['country']}\n📡 {info['operator']}\n"
+
+        response += "\n🌐 Источники:\n"
+        for s in sources:
+            response += f"• {s['site']} ({s['hint']})\n"
+
+        response += "\n💣 Утечки:\n"
+        if leaks.get("found"):
+            for l in leaks.get("sources", []):
+                response += f"• {l}\n"
+        else:
+            response += "✅ Не найдено\n"
+
+        response += "\n📲 Telegram:\n"
+        response += "✅ Найден\n" if tg and tg.get("found") else "❌ Не найден\n"
+
+        response += "\n🧠 AI Анализ:\n" + ai
+
+        response += f"\n\n⏱ {time.time()-start:.1f} сек."
+
+        await status.edit_text(response, reply_markup=main_menu_keyboard())
+
     except Exception as e:
         await status.edit_text(f"❌ {e}")
