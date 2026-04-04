@@ -9,13 +9,6 @@ from aiogram.types import Message
 from database import db
 from config import FREE_SEARCHES_TOTAL
 from utils.rate_limit import rate_limiter
-from utils.formatter import (
-    format_username_results,
-    format_email_results,
-    format_phone_results,
-    format_error,
-    split_message,
-)
 
 from keyboards.inline import (
     main_menu_keyboard,
@@ -36,8 +29,6 @@ from modules.ai_openrouter import analyze_username_ai
 from modules.ai_phone import analyze_phone_ai
 from modules.telegram_osint import get_telegram_info
 
-from utils.cache import get_cache, set_cache
-
 router = Router()
 
 ADMIN_IDS = list(map(int, os.getenv("ADMIN_IDS", "0").split(",")))
@@ -45,6 +36,21 @@ ADMIN_IDS = list(map(int, os.getenv("ADMIN_IDS", "0").split(",")))
 EMAIL_RE = re.compile(r"^[^@]+@[^@]+\.[^@]+$")
 PHONE_RE = re.compile(r"^\+?[0-9]{7,15}$")
 USERNAME_RE = re.compile(r"^@?[a-zA-Z0-9_.-]{2,30}$")
+
+
+# ================= PROGRESS BAR =================
+
+async def progress_bar(msg, percent, text=""):
+    total_blocks = 10
+    filled = int(percent / 100 * total_blocks)
+    empty = total_blocks - filled
+
+    bar = "█" * filled + "░" * empty
+
+    try:
+        await msg.edit_text(f"{text}\n\n[{bar}] {percent}%")
+    except:
+        pass
 
 
 # ================= MAIN =================
@@ -101,42 +107,49 @@ async def handle_search(message: Message):
 
 async def _handle_username(message, username: str):
 
-    status = await message.answer("🔍 Запуск OSINT...")
-
-    async def update(text):
-        try:
-            await status.edit_text(text)
-        except:
-            pass
+    status = await message.answer("🚀 Запуск...")
 
     start = time.time()
 
     try:
-        await update("🌐 Поиск по базам...")
+        await progress_bar(status, 5, "🚀 Запуск OSINT...")
+        await asyncio.sleep(0.3)
+
+        # запускаем параллельно
         search_task = asyncio.create_task(search_username(username))
-
-        await update("📡 Скан соцсетей...")
         social_task = asyncio.create_task(search_username_socials(username))
-
-        await update("📲 Telegram OSINT...")
         tg_task = asyncio.create_task(get_telegram_info(username=username))
+
+        await progress_bar(status, 25, "🌐 Поиск по базам...")
+        await asyncio.sleep(0.3)
+
+        await progress_bar(status, 45, "📡 Скан соцсетей...")
+        await asyncio.sleep(0.3)
+
+        await progress_bar(status, 65, "📲 Telegram OSINT...")
+        await asyncio.sleep(0.3)
+
+        await progress_bar(status, 75, "⏳ Сбор данных...")
 
         found_sites, all_sites = await search_task
         socials = await social_task
         tg = await tg_task
 
-        await update("🧠 AI анализ...")
+        await progress_bar(status, 85, "🧠 AI анализ...")
+        await asyncio.sleep(0.3)
 
         try:
             analysis = await analyze_username_ai(username, found_sites)
         except:
             analysis = "❌ AI недоступен"
 
+        await progress_bar(status, 100, "✅ Завершено")
+        await asyncio.sleep(0.4)
+
         elapsed = time.time() - start
 
         response = f"👤 Username: {username}\n\n"
 
-        # 🌐 сайты
         response += "🌐 Найдено:\n"
         if found_sites:
             for s in found_sites[:10]:
@@ -144,7 +157,6 @@ async def _handle_username(message, username: str):
         else:
             response += "❌ Не найдено\n"
 
-        # 📡 соцсети
         response += "\n📡 Соцсети:\n"
         if socials:
             for s in socials:
@@ -152,31 +164,12 @@ async def _handle_username(message, username: str):
         else:
             response += "❌ Не найдено\n"
 
-        # 📲 TELEGRAM PRO
         response += "\n📲 Telegram:\n"
         if tg and tg.get("found"):
-            name = f"{tg.get('first_name','')} {tg.get('last_name','')}".strip()
-
-            if name:
-                response += f"👤 Имя: {name}\n"
-
-            if tg.get("username"):
-                response += f"🔗 @{tg['username']}\n"
-
             response += f"🆔 ID: {tg['id']}\n"
-
-            if tg.get("bot"):
-                response += "🤖 Бот\n"
-            else:
-                response += "👨 Человек\n"
-
-            if tg.get("bio"):
-                response += f"📝 Bio: {tg['bio']}\n"
-
         else:
             response += "❌ Не найдено\n"
 
-        # 🧠 AI
         response += "\n🧠 AI Анализ:\n" + analysis
         response += f"\n\n⏱ {elapsed:.1f} сек."
 
@@ -194,35 +187,36 @@ async def _handle_username(message, username: str):
 async def _handle_email(message: Message, email: str):
 
     status = await message.answer("📧 Проверка email...")
-    start = time.time()
+    await asyncio.sleep(0.3)
 
     try:
         results = await search_email(email)
-        elapsed = time.time() - start
 
-        response = format_email_results(email, results)
-        response += f"\n\n⏱ Время: {elapsed:.1f} сек."
+        await status.edit_text("⏳ Обработка...")
+        await asyncio.sleep(0.3)
 
-        await _safe_send(
-            status,
-            response,
-            reply_markup=back_to_menu_keyboard()
-        )
+        await status.edit_text("✅ Готово")
+
+        await asyncio.sleep(0.3)
+
+        await status.edit_text(str(results))
 
     except Exception as e:
-        await _safe_send(status, format_error(str(e)))
+        await status.edit_text(f"❌ {e}")
 
 
 # ================= PHONE =================
 
 async def _handle_phone(message: Message, phone: str):
 
-    status = await message.answer("📱 Анализ номера...")
+    status = await message.answer("📱 Анализ...")
 
-    start = time.time()
+    await asyncio.sleep(0.3)
 
     try:
-        # 🚀 Параллельный запуск
+        await progress_bar(status, 20, "📡 Поиск данных...")
+        await asyncio.sleep(0.3)
+
         results, sources, leaks, tg = await asyncio.gather(
             search_phone(phone),
             search_phone_sources(phone),
@@ -230,101 +224,16 @@ async def _handle_phone(message: Message, phone: str):
             get_telegram_info(phone)
         )
 
-        info = basic_phone_info(phone)
+        await progress_bar(status, 70, "🧠 AI анализ...")
+        await asyncio.sleep(0.3)
 
-        ai = await analyze_phone_ai(phone, info, leaks, sources)
+        ai = await analyze_phone_ai(phone, {}, leaks, sources)
 
-        elapsed = time.time() - start
+        await progress_bar(status, 100, "✅ Готово")
 
-        response = f"""
-📱 Номер: {phone}
+        await asyncio.sleep(0.3)
 
-📊 Базовая информация:
-✔️ Валидность: {"Да" if info["valid"] else "Нет"}
-🌍 Страна: {info["country"]}
-📡 Оператор: {info["operator"]}
-"""
-
-        response += "\n" + format_phone_results(phone, results)
-
-        # 🌐 Источники
-        response += "\n\n🌐 Источники:\n"
-        if sources:
-            for s in sources:
-                response += f"- {s['site']} ({s['hint']})\n"
-        else:
-            response += "❌ Не найдено\n"
-
-        # 💣 Утечки
-        response += "\n💣 Утечки:\n"
-        if leaks.get("found"):
-            for l in leaks.get("sources", []):
-                response += f"- {l}\n"
-        else:
-            response += "✅ Не найдено\n"
-
-        # 📲 TELEGRAM PRO
-        response += "\n📲 Telegram PRO:\n"
-
-        if tg and tg.get("found"):
-            name = f"{tg.get('first_name','')} {tg.get('last_name','')}".strip()
-
-            if name:
-                response += f"👤 Имя: {name}\n"
-
-            if tg.get("username"):
-                response += f"🔗 @{tg['username']}\n"
-
-            response += f"🆔 ID: {tg['id']}\n"
-
-            if tg.get("bot"):
-                response += "🤖 Бот\n"
-            else:
-                response += "👨 Человек\n"
-
-            if tg.get("bio"):
-                response += f"📝 Bio: {tg['bio']}\n"
-
-        else:
-            response += "❌ Не найдено\n"
-
-        # 🧠 AI
-        response += "\n\n🧠 AI профиль:\n"
-        response += ai
-
-        response += f"\n\n⏱ Время: {elapsed:.1f} сек."
-
-        await _safe_send(
-            status,
-            response,
-            reply_markup=back_to_menu_keyboard()
-        )
-
-        await db.log_search(
-            message.from_user.id,
-            "phone",
-            phone,
-            1 if results.get("valid") else 0
-        )
+        await status.edit_text(f"📱 {phone}\n\n{ai}")
 
     except Exception as e:
-        await _safe_send(status, format_error(str(e)))
-
-
-# ================= SAFE SEND =================
-
-async def _safe_send(status_msg: Message, text: str, reply_markup=None):
-
-    chunks = split_message(text, 4000)
-
-    try:
-        await status_msg.delete()
-    except:
-        pass
-
-    for i, chunk in enumerate(chunks):
-        await status_msg.answer(
-            chunk,
-            disable_web_page_preview=True,
-            reply_markup=reply_markup if i == len(chunks) - 1 else None
-        )
+        await status.edit_text(f"❌ {e}")
