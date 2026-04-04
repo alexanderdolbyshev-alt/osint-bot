@@ -39,9 +39,9 @@ PHONE_RE = re.compile(r"^\+?[0-9]{7,15}$")
 USERNAME_RE = re.compile(r"^@?[a-zA-Z0-9_.-]{2,30}$")
 
 
-# ================= 💻 TERMINAL CORE =================
+# ================= 💀 DARK TERMINAL =================
 
-async def terminal_stream(msg, lines, min_delay=0.2, max_delay=0.5):
+async def dark_terminal(msg, lines):
     output = ""
 
     for line in lines:
@@ -52,50 +52,56 @@ async def terminal_stream(msg, lines, min_delay=0.2, max_delay=0.5):
         except:
             pass
 
-        await asyncio.sleep(random.uniform(min_delay, max_delay))
+        await asyncio.sleep(random.uniform(0.25, 0.6))
 
-    # убрать курсор
     try:
         await msg.edit_text(f"```bash\n{output}\n```")
     except:
         pass
 
 
-# ================= 📊 PROGRESS BAR =================
+# ================= 🔥 ALERT =================
 
-def build_bar(percent):
-    total = 12
-    filled = int(percent / 100 * total)
-    return "█" * filled + "░" * (total - filled)
-
-
-async def progress_update(msg, percent, text):
-    bar = build_bar(percent)
+async def alert_block(msg, text):
     try:
-        await msg.edit_text(
-            f"{text}\n\n[{bar}] {percent}%"
-        )
+        await msg.edit_text(f"🚨 {text}")
     except:
         pass
+    await asyncio.sleep(1)
 
 
-# ================= 🧠 FAKE AI THINKING =================
+# ================= 🧠 AI THINK =================
 
 async def ai_thinking(msg):
-    thoughts = [
-        "🧠 analyzing behavioral patterns...",
-        "🧠 correlating social graphs...",
-        "🧠 estimating probability model...",
-        "🧠 extracting hidden signals...",
+    steps = [
+        "🧠 scanning darknet patterns...",
+        "🧠 correlating leak databases...",
+        "🧠 analyzing identity footprint...",
+        "🧠 building risk profile...",
     ]
 
-    for t in thoughts:
+    for s in steps:
         try:
-            await msg.edit_text(f"{t}\n\n⏳ thinking...")
+            await msg.edit_text(f"{s}\n\n⏳ processing...")
         except:
             pass
 
         await asyncio.sleep(random.uniform(0.6, 1.2))
+
+
+# ================= 📊 BAR =================
+
+def bar(p):
+    total = 12
+    filled = int(p / 100 * total)
+    return "█" * filled + "░" * (total - filled)
+
+
+async def progress(msg, p, text):
+    try:
+        await msg.edit_text(f"{text}\n\n[{bar(p)}] {p}%")
+    except:
+        pass
 
 
 # ================= MAIN =================
@@ -152,48 +158,56 @@ async def handle_search(message: Message):
 
 async def _handle_username(message, username: str):
 
-    status = await message.answer("💻 booting system...")
+    status = await message.answer("💀 connecting to darknet...")
 
     start = time.time()
 
     try:
-        # 🔥 boot
-        await terminal_stream(status, [
-            "> initializing core...",
-            "> loading modules █░░░░░░░░",
-            "> loading modules ███░░░░░░",
-            "> loading modules ███████░░",
-            "> modules loaded ✓",
-        ])
-
-        # 💀 fake error
-        await terminal_stream(status, [
-            "> connecting to remote node...",
-            "> ERROR: timeout",
-            "> retrying...",
+        # TOR подключение
+        await dark_terminal(status, [
+            "> booting darknet interface...",
+            "> routing traffic via TOR...",
+            "> establishing encrypted tunnel...",
             "> connection established ✓",
         ])
 
-        # 🚀 tasks
+        # 💣 threat alert
+        if random.random() < 0.4:
+            await alert_block(status, "Suspicious activity detected...")
+            await dark_terminal(status, [
+                "> bypassing firewall...",
+                "> masking identity...",
+                "> access granted ✓",
+            ])
+
+        # запуск задач
         search_task = asyncio.create_task(search_username(username))
         social_task = asyncio.create_task(search_username_socials(username))
         tg_task = asyncio.create_task(get_telegram_info(username=username))
 
-        # 📊 progress
-        await progress_update(status, 25, "🌐 scanning databases...")
+        # процесс
+        await dark_terminal(status, [
+            "> scanning surface web...",
+            "> scanning deep web...",
+            "> scanning darknet markets...",
+            "> querying breach databases...",
+        ])
+
+        await progress(status, 40, "🌐 extracting data...")
         await asyncio.sleep(0.5)
 
-        await progress_update(status, 50, "📡 scanning social networks...")
-        await asyncio.sleep(0.5)
-
-        await progress_update(status, 70, "📲 scanning telegram...")
+        await progress(status, 70, "📡 correlating identity...")
         await asyncio.sleep(0.5)
 
         found_sites, all_sites = await search_task
         socials = await social_task
         tg = await tg_task
 
-        # 🧠 AI thinking
+        # утечки триггер
+        if found_sites and len(found_sites) > 3:
+            await alert_block(status, "Data traces found in leak sources")
+
+        # AI
         await ai_thinking(status)
 
         try:
@@ -201,8 +215,7 @@ async def _handle_username(message, username: str):
         except:
             analysis = "❌ AI недоступен"
 
-        await progress_update(status, 100, "✅ completed")
-        await asyncio.sleep(0.5)
+        await progress(status, 100, "✅ completed")
 
         elapsed = time.time() - start
 
@@ -238,56 +251,3 @@ async def _handle_username(message, username: str):
 
     except Exception as e:
         await status.edit_text(f"❌ Ошибка: {e}")
-
-
-# ================= EMAIL =================
-
-async def _handle_email(message: Message, email: str):
-
-    status = await message.answer("💻 email module...")
-
-    await terminal_stream(status, [
-        "> validating format...",
-        "> scanning leaks...",
-        "> checking breach databases...",
-        "> DONE ✓",
-    ])
-
-    try:
-        results = await search_email(email)
-        await status.edit_text(str(results))
-    except Exception as e:
-        await status.edit_text(f"❌ {e}")
-
-
-# ================= PHONE =================
-
-async def _handle_phone(message: Message, phone: str):
-
-    status = await message.answer("💻 phone module...")
-
-    await terminal_stream(status, [
-        "> validating number...",
-        "> scanning operators...",
-        "> checking leaks...",
-        "> querying telegram...",
-    ])
-
-    try:
-        results, sources, leaks, tg = await asyncio.gather(
-            search_phone(phone),
-            search_phone_sources(phone),
-            check_leaks(phone),
-            get_telegram_info(phone)
-        )
-
-        await ai_thinking(status)
-
-        ai = await analyze_phone_ai(phone, {}, leaks, sources)
-
-        await progress_update(status, 100, "✅ completed")
-
-        await status.edit_text(f"📱 {phone}\n\n{ai}")
-
-    except Exception as e:
-        await status.edit_text(f"❌ {e}")
