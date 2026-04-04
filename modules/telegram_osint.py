@@ -1,22 +1,27 @@
 import os
 from telethon import TelegramClient
+from telethon.errors import SessionPasswordNeededError
 from telethon.tl.functions.contacts import ImportContactsRequest
 from telethon.tl.types import InputPhoneContact
 
-api_id = os.getenv("TG_API_ID")
+# 🔥 ENV
+api_id = int(os.getenv("TG_API_ID"))
 api_hash = os.getenv("TG_API_HASH")
 
-if api_id:
-    api_id = int(api_id)
+client = TelegramClient("osint_session", api_id, api_hash)
 
 
-async def get_telegram_info(phone: str) -> dict:
-    if not api_id or not api_hash:
-        return {"found": False}
-
+async def get_telegram_info(phone: str = None, username: str = None):
     try:
-        async with TelegramClient("session", api_id, api_hash) as client:
+        await client.connect()
 
+        if not await client.is_user_authorized():
+            return {"found": False, "error": "Not authorized"}
+
+        user = None
+
+        # ================= PHONE =================
+        if phone:
             contact = InputPhoneContact(
                 client_id=0,
                 phone=phone,
@@ -26,23 +31,47 @@ async def get_telegram_info(phone: str) -> dict:
 
             result = await client(ImportContactsRequest([contact]))
 
-            if not result.users:
+            if result.users:
+                user = result.users[0]
+
+        # ================= USERNAME =================
+        elif username:
+            try:
+                user = await client.get_entity(username)
+            except:
                 return {"found": False}
 
-            user = result.users[0]
+        if not user:
+            return {"found": False}
 
-            # 🔥 получаем bio
+        # 🔥 БИО
+        bio = None
+        try:
             full = await client.get_entity(user.id)
+            bio = getattr(full, "about", None)
+        except:
+            pass
 
-            return {
-                "found": True,
-                "id": user.id,
-                "username": user.username,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "phone": user.phone,
-                "bot": user.bot,
-            }
+        # 🔥 ФОТО
+        photo = None
+        try:
+            photo = await client.download_profile_photo(user, file="temp.jpg")
+        except:
+            pass
+
+        return {
+            "found": True,
+            "id": user.id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "username": user.username,
+            "bot": user.bot,
+            "bio": bio,
+            "photo": photo,
+        }
 
     except Exception as e:
-        return {"found": False, "error": str(e)}
+        return {
+            "found": False,
+            "error": str(e)
+        }

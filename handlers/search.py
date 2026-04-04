@@ -24,6 +24,7 @@ from keyboards.inline import (
 )
 
 from modules.username_search import search_username
+from modules.username_osint import search_username_socials
 from modules.email_search import search_email
 from modules.phone_search import (
     search_phone,
@@ -33,9 +34,9 @@ from modules.phone_search import (
 from modules.leak_check import check_leaks
 from modules.ai_openrouter import analyze_username_ai
 from modules.ai_phone import analyze_phone_ai
-from utils.cache import get_cache, set_cache
 from modules.telegram_osint import get_telegram_info
-from modules.username_osint import search_username_socials
+
+from utils.cache import get_cache, set_cache
 
 router = Router()
 
@@ -45,6 +46,8 @@ EMAIL_RE = re.compile(r"^[^@]+@[^@]+\.[^@]+$")
 PHONE_RE = re.compile(r"^\+?[0-9]{7,15}$")
 USERNAME_RE = re.compile(r"^@?[a-zA-Z0-9_.-]{2,30}$")
 
+
+# ================= MAIN =================
 
 @router.message()
 async def handle_search(message: Message):
@@ -96,56 +99,94 @@ async def handle_search(message: Message):
 
 # ================= USERNAME =================
 
-async def _handle_username(message: Message, username: str):
+async def _handle_username(message, username: str):
 
-    status = await message.answer("🔍 Поиск username...")
+    status = await message.answer("🔍 Запуск OSINT...")
+
+    async def update(text):
+        try:
+            await status.edit_text(text)
+        except:
+            pass
+
     start = time.time()
 
     try:
-        # ⚡ параллельно
+        await update("🌐 Поиск по базам...")
         search_task = asyncio.create_task(search_username(username))
+
+        await update("📡 Скан соцсетей...")
         social_task = asyncio.create_task(search_username_socials(username))
+
+        await update("📲 Telegram OSINT...")
+        tg_task = asyncio.create_task(get_telegram_info(username=username))
 
         found_sites, all_sites = await search_task
         socials = await social_task
+        tg = await tg_task
+
+        await update("🧠 AI анализ...")
+
+        try:
+            analysis = await analyze_username_ai(username, found_sites)
+        except:
+            analysis = "❌ AI недоступен"
 
         elapsed = time.time() - start
 
-        response = format_username_results(username, found_sites, all_sites)
+        response = f"👤 Username: {username}\n\n"
 
-        # 🌐 СОЦСЕТИ
-        response += "\n\n🌐 Соцсети:\n"
+        # 🌐 сайты
+        response += "🌐 Найдено:\n"
+        if found_sites:
+            for s in found_sites[:10]:
+                response += f"• {s['site']}: {s['url']}\n"
+        else:
+            response += "❌ Не найдено\n"
 
+        # 📡 соцсети
+        response += "\n📡 Соцсети:\n"
         if socials:
             for s in socials:
                 response += f"• {s['site']}: {s['url']}\n"
         else:
             response += "❌ Не найдено\n"
 
+        # 📲 TELEGRAM PRO
+        response += "\n📲 Telegram:\n"
+        if tg and tg.get("found"):
+            name = f"{tg.get('first_name','')} {tg.get('last_name','')}".strip()
+
+            if name:
+                response += f"👤 Имя: {name}\n"
+
+            if tg.get("username"):
+                response += f"🔗 @{tg['username']}\n"
+
+            response += f"🆔 ID: {tg['id']}\n"
+
+            if tg.get("bot"):
+                response += "🤖 Бот\n"
+            else:
+                response += "👨 Человек\n"
+
+            if tg.get("bio"):
+                response += f"📝 Bio: {tg['bio']}\n"
+
+        else:
+            response += "❌ Не найдено\n"
+
         # 🧠 AI
-        try:
-            analysis = await analyze_username_ai(username, found_sites)
-        except:
-            analysis = "❌ AI недоступен"
+        response += "\n🧠 AI Анализ:\n" + analysis
+        response += f"\n\n⏱ {elapsed:.1f} сек."
 
-        response += "\n\n🧠 AI Анализ:\n" + analysis
-        response += f"\n\n⏱ Время: {elapsed:.1f} сек."
-
-        await _safe_send(
-            status,
+        await status.edit_text(
             response,
             reply_markup=main_menu_keyboard()
         )
 
-        await db.log_search(
-            message.from_user.id,
-            "username",
-            username,
-            len(found_sites)
-        )
-
     except Exception as e:
-        await _safe_send(status, format_error(str(e)))
+        await status.edit_text(f"❌ Ошибка: {e}")
 
 
 # ================= EMAIL =================
@@ -176,7 +217,14 @@ async def _handle_email(message: Message, email: str):
 
 async def _handle_phone(message: Message, phone: str):
 
-    status = await message.answer("📱 Анализ номера...")
+    status = await message.answer("📱 Запуск анализа...")
+
+    async def update(text):
+        try:
+            await status.edit_text(text)
+        except:
+            pass
+
     start = time.time()
 
     try:
@@ -191,12 +239,16 @@ async def _handle_phone(message: Message, phone: str):
             )
             return
 
+        await update("📡 Поиск источников...")
+
         results, sources, leaks, tg = await asyncio.gather(
             search_phone(phone),
             search_phone_sources(phone),
             check_leaks(phone),
             get_telegram_info(phone)
         )
+
+        await update("🧠 AI анализ...")
 
         info = basic_phone_info(phone)
 
@@ -207,82 +259,59 @@ async def _handle_phone(message: Message, phone: str):
 
         elapsed = time.time() - start
 
-        response = f"""
-📱 **АНАЛИЗ НОМЕРА**
-━━━━━━━━━━━━━━━━━━━
-📞 `{phone}`
+        response = f"📱 Номер: {phone}\n\n"
+        response += f"🌍 {info['country']} | 📡 {info['operator']}\n"
 
-📊 **Основное**
-✔️ Валидность: {"Да" if info["valid"] else "Нет"}
-🌍 Страна: {info["country"]}
-📡 Оператор: {info["operator"]}
-"""
-
-        response += "\n" + format_phone_results(phone, results)
-
-        # Источники
-        response += "\n\n🌐 **Источники**\n"
+        response += "\n🌐 Источники:\n"
         if sources:
             for s in sources[:10]:
-                response += f"• {s['site']} ({s['hint']})\n"
+                response += f"• {s['site']}\n"
         else:
             response += "❌ Не найдено\n"
 
-        # Утечки
-        response += "\n💣 **Утечки**\n"
+        response += "\n💣 Утечки:\n"
         if leaks.get("found"):
-            for l in leaks.get("sources", [])[:10]:
+            for l in leaks.get("sources", []):
                 response += f"• {l}\n"
         else:
             response += "✅ Не найдено\n"
 
-        # Telegram
-        response += "\n\n📲 **Telegram**\n"
-        if tg and tg.get("found"):
-            name = f"{tg.get('first_name', '')} {tg.get('last_name', '')}".strip()
+        response += "\n📲 Telegram PRO:\n"
 
-            if name:
-                response += f"👤 Имя: {name}\n"
+if tg and tg.get("found"):
+    name = f"{tg.get('first_name','')} {tg.get('last_name','')}".strip()
 
-            if tg.get("username"):
-                response += f"🔗 Username: @{tg['username']}\n"
+    if name:
+        response += f"👤 Имя: {name}\n"
 
-            if tg.get("id"):
-                response += f"🆔 ID: {tg['id']}\n"
+    if tg.get("username"):
+        response += f"🔗 @{tg['username']}\n"
 
-            if tg.get("bot"):
-                response += "🤖 Это бот\n"
-            else:
-                response += "👨 Человек\n"
+    response += f"🆔 ID: {tg['id']}\n"
 
-        else:
-            response += "❌ Не найдено\n"
+    if tg.get("bot"):
+        response += "🤖 Бот\n"
+    else:
+        response += "👨 Человек\n"
 
-        # AI
-        response += "\n🧠 **AI профиль**\n"
-        response += ai
+    if tg.get("bio"):
+        response += f"📝 Bio: {tg['bio']}\n"
 
+else:
+    response += "❌ Не найдено\n"
+
+        response += "\n🧠 AI:\n" + ai
         response += f"\n\n⏱ {elapsed:.1f} сек."
-        response += "\n━━━━━━━━━━━━━━━━━━━"
-        response += "\n⚡ Powered by OSINT Engine"
 
         set_cache(cache_key, response)
 
-        await _safe_send(
-            status,
+        await status.edit_text(
             response,
             reply_markup=back_to_menu_keyboard()
         )
 
-        await db.log_search(
-            message.from_user.id,
-            "phone",
-            phone,
-            1 if results.get("valid") else 0
-        )
-
     except Exception as e:
-        await _safe_send(status, format_error(str(e)))
+        await status.edit_text(f"❌ Ошибка: {e}")
 
 
 # ================= SAFE SEND =================

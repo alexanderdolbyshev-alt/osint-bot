@@ -21,8 +21,7 @@ async def check_site(client, name, url, username):
 
         text = r.text.lower()
 
-        # 🔥 защита от фейков
-        if "not found" in text or "page isn’t available" in text:
+        if "not found" in text:
             return None
 
         if username.lower() not in text:
