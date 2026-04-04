@@ -32,19 +32,13 @@ async def on_shutdown():
 
 async def main():
     if BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
-        logger.error(
-            "BOT_TOKEN not set! "
-            "export BOT_TOKEN='your_token'"
-        )
+        logger.error("BOT_TOKEN not set!")
         return
 
     bot = Bot(token=BOT_TOKEN)
     dp = Dispatcher()
 
-    # Порядок роутеров важен!
-    # 1. Команды (/start, /help)
-    # 2. Платежи (pre_checkout, successful_payment)
-    # 3. Поиск (catch-all для текстовых сообщений)
+    # роутеры
     dp.include_router(commands.router)
     dp.include_router(payment.router)
     dp.include_router(search.router)
@@ -52,13 +46,13 @@ async def main():
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
 
-    logger.info("Starting polling...")
+    logger.info("🚀 Starting bot...")
 
+    # 🔥 ВАЖНО: сначала убиваем webhook
+    await bot.delete_webhook(drop_pending_updates=True)
+
+    # 🔥 потом запускаем ОДИН polling
     try:
-        await dp.start_polling(bot, drop_pending_updates=True)
+        await dp.start_polling(bot)
     finally:
         await bot.session.close()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
