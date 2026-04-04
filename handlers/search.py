@@ -217,30 +217,12 @@ async def _handle_email(message: Message, email: str):
 
 async def _handle_phone(message: Message, phone: str):
 
-    status = await message.answer("📱 Запуск анализа...")
-
-    async def update(text):
-        try:
-            await status.edit_text(text)
-        except:
-            pass
+    status = await message.answer("📱 Анализ номера...")
 
     start = time.time()
 
     try:
-        cache_key = f"phone:{phone}"
-        cached = get_cache(cache_key)
-
-        if cached:
-            await status.delete()
-            await message.answer(
-                "⚡ Найдено в кеше\n\n" + cached,
-                reply_markup=back_to_menu_keyboard()
-            )
-            return
-
-        await update("📡 Поиск источников...")
-
+        # 🚀 Параллельный запуск
         results, sources, leaks, tg = await asyncio.gather(
             search_phone(phone),
             search_phone_sources(phone),
@@ -248,70 +230,85 @@ async def _handle_phone(message: Message, phone: str):
             get_telegram_info(phone)
         )
 
-        await update("🧠 AI анализ...")
-
         info = basic_phone_info(phone)
 
-        try:
-            ai = await analyze_phone_ai(phone, info, leaks, sources)
-        except:
-            ai = "❌ AI недоступен"
+        ai = await analyze_phone_ai(phone, info, leaks, sources)
 
         elapsed = time.time() - start
 
-        response = f"📱 Номер: {phone}\n\n"
-        response += f"🌍 {info['country']} | 📡 {info['operator']}\n"
+        response = f"""
+📱 Номер: {phone}
 
-        response += "\n🌐 Источники:\n"
+📊 Базовая информация:
+✔️ Валидность: {"Да" if info["valid"] else "Нет"}
+🌍 Страна: {info["country"]}
+📡 Оператор: {info["operator"]}
+"""
+
+        response += "\n" + format_phone_results(phone, results)
+
+        # 🌐 Источники
+        response += "\n\n🌐 Источники:\n"
         if sources:
-            for s in sources[:10]:
-                response += f"• {s['site']}\n"
+            for s in sources:
+                response += f"- {s['site']} ({s['hint']})\n"
         else:
             response += "❌ Не найдено\n"
 
+        # 💣 Утечки
         response += "\n💣 Утечки:\n"
         if leaks.get("found"):
             for l in leaks.get("sources", []):
-                response += f"• {l}\n"
+                response += f"- {l}\n"
         else:
             response += "✅ Не найдено\n"
 
+        # 📲 TELEGRAM PRO
         response += "\n📲 Telegram PRO:\n"
 
-if tg and tg.get("found"):
-    name = f"{tg.get('first_name','')} {tg.get('last_name','')}".strip()
+        if tg and tg.get("found"):
+            name = f"{tg.get('first_name','')} {tg.get('last_name','')}".strip()
 
-    if name:
-        response += f"👤 Имя: {name}\n"
+            if name:
+                response += f"👤 Имя: {name}\n"
 
-    if tg.get("username"):
-        response += f"🔗 @{tg['username']}\n"
+            if tg.get("username"):
+                response += f"🔗 @{tg['username']}\n"
 
-    response += f"🆔 ID: {tg['id']}\n"
+            response += f"🆔 ID: {tg['id']}\n"
 
-    if tg.get("bot"):
-        response += "🤖 Бот\n"
-    else:
-        response += "👨 Человек\n"
+            if tg.get("bot"):
+                response += "🤖 Бот\n"
+            else:
+                response += "👨 Человек\n"
 
-    if tg.get("bio"):
-        response += f"📝 Bio: {tg['bio']}\n"
+            if tg.get("bio"):
+                response += f"📝 Bio: {tg['bio']}\n"
 
-else:
-    response += "❌ Не найдено\n"
+        else:
+            response += "❌ Не найдено\n"
 
-        response += "\n🧠 AI:\n" + ai
-        response += f"\n\n⏱ {elapsed:.1f} сек."
+        # 🧠 AI
+        response += "\n\n🧠 AI профиль:\n"
+        response += ai
 
-        set_cache(cache_key, response)
+        response += f"\n\n⏱ Время: {elapsed:.1f} сек."
 
-        await status.edit_text(
+        await _safe_send(
+            status,
             response,
             reply_markup=back_to_menu_keyboard()
         )
 
+        await db.log_search(
+            message.from_user.id,
+            "phone",
+            phone,
+            1 if results.get("valid") else 0
+        )
+
     except Exception as e:
-        await status.edit_text(f"❌ Ошибка: {e}")
+        await _safe_send(status, format_error(str(e)))
 
 
 # ================= SAFE SEND =================
