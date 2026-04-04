@@ -1,7 +1,3 @@
-"""
-Оплата через Telegram Stars
-"""
-
 from aiogram import Router, F
 from aiogram.types import (
     CallbackQuery,
@@ -10,23 +6,21 @@ from aiogram.types import (
     PreCheckoutQuery,
 )
 
-from database import db
 from config import PAYMENT_PACKAGES
-from keyboards.inline import (
-    main_menu_keyboard,
-    confirm_payment_keyboard,
-)
+from database import db
+from keyboards.inline import main_menu_keyboard, confirm_payment_keyboard
 
 router = Router()
 
 
-# ═══════════════════════════════════════════════════════
-#  Выбор пакета
-# ═══════════════════════════════════════════════════════
+# ================= ВЫБОР ПАКЕТА =================
 
-@router.callback_query(F.data.startswith("buy_pack_"))
-async def cb_select_package(callback: CallbackQuery):
-    pack_id = callback.data.replace("buy_pack_", "")
+@router.callback_query(F.data.startswith("buy_"))
+async def buy(callback: CallbackQuery):
+    pack_id = callback.data.replace("buy_", "")
+
+    print("BUY PACK:", pack_id)
+    print("AVAILABLE:", PAYMENT_PACKAGES.keys())
 
     if pack_id not in PAYMENT_PACKAGES:
         await callback.answer("❌ Пакет не найден", show_alert=True)
@@ -35,27 +29,24 @@ async def cb_select_package(callback: CallbackQuery):
     pack = PAYMENT_PACKAGES[pack_id]
 
     await callback.message.edit_text(
-        "━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        "💳 **Подтверждение покупки**\n"
-        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"📦 Пакет: **{pack['label']}**\n"
-        f"🔍 Запросов: **{pack['searches']}**\n"
-        f"⭐ Цена: **{pack['stars']} Stars**\n\n"
-        "Нажми «Оплатить»:",
-        parse_mode="Markdown",
+        f"💳 Покупка\n\n"
+        f"📦 {pack['label']}\n"
+        f"🔍 {pack['searches']} запросов\n"
+        f"⭐ {pack['stars']} Stars\n\n"
+        f"Подтвердить оплату?",
         reply_markup=confirm_payment_keyboard(pack_id)
     )
 
     await callback.answer()
 
 
-# ═══════════════════════════════════════════════════════
-#  Отправка инвойса
-# ═══════════════════════════════════════════════════════
+# ================= ПОДТВЕРЖДЕНИЕ =================
 
 @router.callback_query(F.data.startswith("confirm_"))
-async def cb_confirm_payment(callback: CallbackQuery):
+async def confirm(callback: CallbackQuery):
     pack_id = callback.data.replace("confirm_", "")
+
+    print("CONFIRM PACK:", pack_id)
 
     if pack_id not in PAYMENT_PACKAGES:
         await callback.answer("❌ Пакет не найден", show_alert=True)
@@ -64,12 +55,9 @@ async def cb_confirm_payment(callback: CallbackQuery):
     pack = PAYMENT_PACKAGES[pack_id]
 
     await callback.message.answer_invoice(
-        title=f"OSINT Bot — {pack['label']}",
-        description=(
-            f"{pack['searches']} поисковых запросов.\n"
-            f"Активируется сразу после оплаты."
-        ),
-        payload=pack_id,  # ВАЖНО
+        title=pack["label"],
+        description=f"{pack['searches']} запросов",
+        payload=pack_id,  # 🔥 ВАЖНО
         currency="XTR",
         prices=[
             LabeledPrice(
@@ -82,15 +70,13 @@ async def cb_confirm_payment(callback: CallbackQuery):
     await callback.answer()
 
 
-# ═══════════════════════════════════════════════════════
-#  Pre-checkout
-# ═══════════════════════════════════════════════════════
+# ================= PRE CHECKOUT =================
 
 @router.pre_checkout_query()
-async def on_pre_checkout(pre_checkout: PreCheckoutQuery):
-    pack_id = pre_checkout.invoice_payload
+async def pre_checkout(pre_checkout: PreCheckoutQuery):
+    print("PRE CHECK:", pre_checkout.invoice_payload)
 
-    if pack_id not in PAYMENT_PACKAGES:
+    if pre_checkout.invoice_payload not in PAYMENT_PACKAGES:
         await pre_checkout.answer(
             ok=False,
             error_message="Ошибка пакета"
@@ -100,47 +86,30 @@ async def on_pre_checkout(pre_checkout: PreCheckoutQuery):
     await pre_checkout.answer(ok=True)
 
 
-# ═══════════════════════════════════════════════════════
-#  УСПЕШНАЯ ОПЛАТА
-# ═══════════════════════════════════════════════════════
+# ================= УСПЕШНАЯ ОПЛАТА =================
 
 @router.message(F.successful_payment)
-async def on_successful_payment(message: Message):
+async def success(message: Message):
 
     payment = message.successful_payment
     pack_id = payment.invoice_payload
     user_id = message.from_user.id
 
+    print("SUCCESS PACK:", pack_id)
+
     if pack_id not in PAYMENT_PACKAGES:
-        await message.answer("❌ Ошибка оплаты. Напиши в поддержку.")
+        await message.answer("❌ Ошибка оплаты")
         return
 
     pack = PAYMENT_PACKAGES[pack_id]
 
-    # создаем пользователя если нет
     await db.ensure_user(
         user_id,
         message.from_user.username,
         message.from_user.first_name
     )
 
-    # ⭐ БЕЗЛИМИТ
-    if pack_id == "pack_unlimited":
-        await db.set_premium(user_id, days=30)
-
-        await message.answer(
-            "━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "✅ **Оплата прошла!**\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "♾️ **Premium активирован (30 дней)**\n"
-            "🚀 Безлимитный доступ включён\n\n"
-            "Спасибо! 🔥",
-            parse_mode="Markdown",
-            reply_markup=main_menu_keyboard()
-        )
-        return
-
-    # ⭐ ОБЫЧНЫЕ ПАКЕТЫ
+    # обычные пакеты
     await db.add_paid_searches(
         user_id=user_id,
         count=pack["searches"],
@@ -149,16 +118,8 @@ async def on_successful_payment(message: Message):
         charge_id=payment.telegram_payment_charge_id
     )
 
-    remaining = await db.get_paid_remaining(user_id)
-
     await message.answer(
-        "━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        "✅ **Оплата прошла!**\n"
-        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"📦 Пакет: **{pack['label']}**\n"
-        f"🔍 +{pack['searches']} запросов\n"
-        f"💰 Баланс: **{remaining}**\n\n"
-        "🚀 Можешь продолжать поиск",
-        parse_mode="Markdown",
+        f"✅ Оплата прошла!\n\n"
+        f"+{pack['searches']} запросов добавлено 🚀",
         reply_markup=main_menu_keyboard()
     )
